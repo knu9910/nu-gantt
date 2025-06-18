@@ -157,7 +157,7 @@ export const createGanttMouseMoveHandler = (
   dragState: DragState,
   ganttRef: React.RefObject<HTMLDivElement | null>,
   dates: string[],
-  taskNames: string[],
+  rows: string[],
   handleMouseEnter: (row: number, col: number) => void
 ) => {
   return (e: React.MouseEvent) => {
@@ -185,12 +185,7 @@ export const createGanttMouseMoveHandler = (
       }
 
       // 유효한 범위 내에서만 처리
-      if (
-        col >= 0 &&
-        col < dates.length &&
-        row >= 0 &&
-        row < taskNames.length
-      ) {
+      if (col >= 0 && col < dates.length && row >= 0 && row < rows.length) {
         handleMouseEnter(row, col);
       }
     }

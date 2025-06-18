@@ -445,7 +445,7 @@ export const createClickOutsideHandler = (
 export const createGanttMouseMoveHandler = (
   dragState: DragState,
   dates: string[],
-  taskNames: string[],
+  rows: string[],
   ganttRef: React.RefObject<HTMLDivElement | null>,
   handleMouseEnter: (row: number, col: number) => void
 ) => {
@@ -464,12 +464,7 @@ export const createGanttMouseMoveHandler = (
       const row = Math.floor(y / CELL_HEIGHT);
 
       // 유효한 범위 내에서만 처리
-      if (
-        col >= 0 &&
-        col < dates.length &&
-        row >= 0 &&
-        row < taskNames.length
-      ) {
+      if (col >= 0 && col < dates.length && row >= 0 && row < rows.length) {
         handleMouseEnter(row, col);
       }
     }

@@ -7,9 +7,10 @@ import { taskColors } from "@/_constants/task-colors";
 import { generateDates } from "../_utils/date-utils";
 import {
   createMouseDownHandler,
-  createMouseEnterHandler,
   createMouseUpHandler,
   createRightClickHandler,
+  createMouseEnterHandler,
+  createGanttMouseMoveHandler,
   createTaskFromContextHandler,
   createColumnClickHandler,
   createClickOutsideHandler,
@@ -18,7 +19,6 @@ import {
   createDeleteTaskHandler,
   createUpdateTaskNameHandler,
 } from "../_utils/task-utils";
-import { createGanttMouseMoveHandler } from "../_utils/drag-utils";
 
 // Component imports
 import { ContextMenu } from "./context-menu";
@@ -72,11 +72,10 @@ export interface ColumnSelection {
 export const GanttChart: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dates, setDates] = useState(() => generateDates([]));
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [taskNames, setTaskNames] = useState<string[]>(
+  const [rows, setRows] = useState<string[]>(() =>
     Array(15)
       .fill("")
-      .map((_, i) => `태스크 ${i + 1}`)
+      .map((_, i) => `행 ${i + 1}`)
   );
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
@@ -112,6 +111,16 @@ export const GanttChart: React.FC = () => {
 
   const ganttRef = useRef<HTMLDivElement>(null);
 
+  // 행 개수 조절 함수
+  const updateRowCount = (newRowCount: number) => {
+    const validCount = Math.max(1, Math.min(50, newRowCount));
+    setRows(
+      Array(validCount)
+        .fill("")
+        .map((_, i) => `행 ${i + 1}`)
+    );
+  };
+
   // 이벤트 핸들러들 생성
   const handleMouseDown = createMouseDownHandler(
     dates,
@@ -122,7 +131,21 @@ export const GanttChart: React.FC = () => {
     setDragSelection
   );
 
+  const handleRightClick = createRightClickHandler(
+    tasks,
+    dates,
+    setContextMenu
+  );
+
   const handleMouseEnter = createMouseEnterHandler(dragState, setDragState);
+
+  const handleGanttMouseMove = createGanttMouseMoveHandler(
+    dragState,
+    dates,
+    rows,
+    ganttRef,
+    handleMouseEnter
+  );
 
   const handleMouseUp = createMouseUpHandler(
     dragState,
@@ -139,11 +162,11 @@ export const GanttChart: React.FC = () => {
     ganttRef
   );
 
-  const handleRightClick = createRightClickHandler(
-    tasks,
-    dates,
-    setContextMenu
-  );
+  const handleMouseLeave = () => {
+    // 마우스가 간트 차트 영역을 벗어날 때 선택 해제
+    setColumnSelection({ isSelected: false, selectedColumn: null });
+    setDragSelection({ isSelected: false });
+  };
 
   const createTaskFromContext = createTaskFromContextHandler(
     contextMenu,
@@ -171,15 +194,6 @@ export const GanttChart: React.FC = () => {
 
   // 태스크 이름 업데이트
   const updateTaskName = createUpdateTaskNameHandler(tasks, setTasks);
-
-  // 간트 차트 전체 영역에서의 마우스 무브 이벤트 핸들러
-  const handleGanttMouseMove = createGanttMouseMoveHandler(
-    dragState,
-    ganttRef,
-    dates,
-    taskNames,
-    handleMouseEnter
-  );
 
   // 태스크 클릭 핸들러
   const handleTaskClick = (task: Task, e: React.MouseEvent) => {
@@ -251,23 +265,33 @@ export const GanttChart: React.FC = () => {
   }, [handleClickOutside, handleMouseUp]);
 
   return (
-    <div className="w-full p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">간트 차트</h1>
-        <div className="text-sm text-gray-600 mb-4">
-          <p>• 빈 셀을 드래그한 후 우클릭하여 태스크를 생성하세요</p>
-          <p>• 태스크를 드래그하여 이동하거나 크기를 조절하세요</p>
-          <p>• 태스크 시작/끝 부분을 드래그하면 크기가 조절됩니다</p>
-          <p>• 빈 셀에서 우클릭으로 단일 태스크를 생성할 수도 있습니다</p>
-          <p>• 태스크를 클릭하면 이름을 변경할 수 있습니다</p>
-        </div>
+    <div className="p-4">
+      <h1 className="text-2xl font-bold mb-4">간트 차트</h1>
+
+      {/* 행 개수 조절 컨트롤 */}
+      <div className="mb-4 flex items-center gap-4">
+        <label htmlFor="rowCount" className="text-sm font-medium">
+          행 개수:
+        </label>
+        <input
+          id="rowCount"
+          type="number"
+          min="1"
+          max="50"
+          value={rows.length}
+          onChange={(e) => updateRowCount(parseInt(e.target.value) || 1)}
+          className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+        />
+        <span className="text-sm text-gray-500">(현재 {rows.length}개 행)</span>
       </div>
 
       <div
         ref={ganttRef}
-        className="border border-gray-300 rounded-lg overflow-auto shadow-lg select-none"
-        style={{ maxHeight: "600px" }}
+        className="border border-gray-300 overflow-auto relative"
+        style={{ height: "600px" }}
         onMouseMove={handleGanttMouseMove}
+        onMouseUp={(e) => handleMouseUp(e.nativeEvent)}
+        onMouseLeave={handleMouseLeave}
       >
         {/* 헤더 - 날짜 */}
         <GanttHeader
@@ -278,7 +302,7 @@ export const GanttChart: React.FC = () => {
 
         {/* 태스크 행들 */}
         <div>
-          {taskNames.map((taskName, rowIndex) => (
+          {rows.map((rowName, rowIndex) => (
             <div key={rowIndex} className="flex border-gray-200">
               {/* 날짜 셀들 */}
               {dates.map((date, colIndex) => (
