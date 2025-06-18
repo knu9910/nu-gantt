@@ -126,19 +126,22 @@ export const getDragType = (
 };
 
 /**
- * 드래그 선택 범위 계산
+ * 드래그 선택 영역 계산 함수
  */
 export const calculateDragSelection = (
   startPos: { row: number; col: number },
   currentPos: { row: number; col: number }
-): DragSelection => {
-  const startCol = Math.min(startPos.col, currentPos.col);
-  const endCol = Math.max(startPos.col, currentPos.col);
-
+) => {
   return {
     isSelected: true,
-    startPos: { row: startPos.row, col: startCol },
-    endPos: { row: startPos.row, col: endCol },
+    startPos: {
+      row: startPos.row,
+      col: Math.min(startPos.col, currentPos.col),
+    },
+    endPos: {
+      row: currentPos.row,
+      col: Math.max(startPos.col, currentPos.col),
+    },
   };
 };
 

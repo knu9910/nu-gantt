@@ -80,23 +80,23 @@ export const isValidTask = (task: Partial<Task>): boolean => {
 // ==========================================
 
 /**
- * 새 태스크 생성
+ * 새 태스크 생성 함수
  */
 export const createNewTask = (
   row: number,
   startCol: number,
   endCol: number,
   dates: string[],
-  existingTasks: Task[],
+  tasks: Task[],
   taskColors: string[]
 ): Task => {
   return {
-    id: `task-${Date.now()}`,
-    name: `새 태스크 ${existingTasks.length + 1}`,
+    id: Date.now().toString(),
+    name: `새 태스크 ${tasks.length + 1}`,
     startDate: dates[startCol],
     endDate: dates[endCol],
-    row,
-    color: taskColors[existingTasks.length % taskColors.length],
+    row: row,
+    color: taskColors[tasks.length % taskColors.length],
   };
 };
 

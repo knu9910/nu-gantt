@@ -133,7 +133,8 @@ export const GanttChart: React.FC = () => {
       // MouseEvent를 React.MouseEvent로 변환
       const reactEvent = e as unknown as React.MouseEvent;
       handleTaskClick(task, reactEvent);
-    }
+    },
+    ganttRef
   );
 
   const handleRightClick = createRightClickHandler(
@@ -150,7 +151,8 @@ export const GanttChart: React.FC = () => {
     taskColors,
     setTasks,
     setDragSelection,
-    setContextMenu
+    setContextMenu,
+    ganttRef
   );
 
   const handleColumnClick = createColumnClickHandler(setColumnSelection);

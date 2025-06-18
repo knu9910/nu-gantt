@@ -9,6 +9,7 @@ import {
 import { getTaskForCell } from "./task-utils";
 import { createNewTask } from "./task-utils";
 import { calculateDragSelection } from "./drag-utils";
+import { scrollToTask } from "./scroll-utils";
 
 // ==========================================
 // 이벤트 핸들러 유틸리티 함수들
@@ -118,7 +119,8 @@ export const createMouseUpHandler = (
   setDragState: React.Dispatch<React.SetStateAction<DragState>>,
   setDragSelection: React.Dispatch<React.SetStateAction<DragSelection>>,
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
-  onTaskClick?: (task: Task, e: MouseEvent) => void
+  onTaskClick?: (task: Task, e: MouseEvent) => void,
+  ganttRef?: React.RefObject<HTMLDivElement | null>
 ) => {
   return (e?: MouseEvent) => {
     if (!dragState.isDragging || !dragState.startPos || !dragState.currentPos) {
@@ -207,6 +209,19 @@ export const createMouseUpHandler = (
                 : t
             )
           );
+
+          // 태스크 이동 후 스크롤
+          if (ganttRef) {
+            setTimeout(() => {
+              scrollToTask(
+                ganttRef,
+                currentPos.row,
+                newStartCol,
+                newEndCol,
+                true
+              );
+            }, 100);
+          }
         }
       }
     } else if (dragType === "resize-start" && taskId) {
@@ -233,6 +248,19 @@ export const createMouseUpHandler = (
                 : t
             )
           );
+
+          // 태스크 리사이즈 후 스크롤
+          if (ganttRef) {
+            setTimeout(() => {
+              scrollToTask(
+                ganttRef,
+                task.row,
+                newStartCol,
+                originalEndCol,
+                true
+              );
+            }, 100);
+          }
         }
       }
     } else if (dragType === "resize-end" && taskId) {
@@ -259,6 +287,19 @@ export const createMouseUpHandler = (
                 : t
             )
           );
+
+          // 태스크 리사이즈 후 스크롤
+          if (ganttRef) {
+            setTimeout(() => {
+              scrollToTask(
+                ganttRef,
+                task.row,
+                originalStartCol,
+                newEndCol,
+                true
+              );
+            }, 100);
+          }
         }
       }
     }
@@ -302,7 +343,8 @@ export const createTaskFromContextHandler = (
   taskColors: string[],
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
   setDragSelection: React.Dispatch<React.SetStateAction<DragSelection>>,
-  setContextMenu: React.Dispatch<React.SetStateAction<ContextMenuState>>
+  setContextMenu: React.Dispatch<React.SetStateAction<ContextMenuState>>,
+  ganttRef?: React.RefObject<HTMLDivElement | null>
 ) => {
   return () => {
     // 드래그 선택 영역이 있는지 확인
@@ -321,6 +363,20 @@ export const createTaskFromContextHandler = (
         taskColors
       );
       setTasks([...tasks, newTask]);
+
+      // 태스크 생성 후 해당 위치로 스크롤
+      if (ganttRef && dragSelection.startPos && dragSelection.endPos) {
+        setTimeout(() => {
+          scrollToTask(
+            ganttRef,
+            dragSelection.startPos!.row,
+            dragSelection.startPos!.col,
+            dragSelection.endPos!.col,
+            true
+          );
+        }, 100);
+      }
+
       // 드래그 선택 영역 초기화
       setDragSelection({ isSelected: false });
     } else {
@@ -334,6 +390,19 @@ export const createTaskFromContextHandler = (
         taskColors
       );
       setTasks([...tasks, newTask]);
+
+      // 단일 태스크 생성 후 스크롤
+      if (ganttRef) {
+        setTimeout(() => {
+          scrollToTask(
+            ganttRef,
+            contextMenu.row,
+            contextMenu.col,
+            contextMenu.col + 2,
+            true
+          );
+        }, 100);
+      }
     }
     setContextMenu({ ...contextMenu, show: false });
   };
