@@ -167,7 +167,17 @@ export const createGanttMouseMoveHandler = (
       const y = e.clientY - rect.top - headerHeight + scrollTop;
 
       const col = Math.floor(x / cellWidth);
-      const row = Math.floor(y / cellHeight);
+      let row = Math.floor(y / cellHeight);
+
+      // resize 중일 때는 행 이동을 막고 원래 행에서만 작업
+      if (
+        dragState.dragType === "resize-start" ||
+        dragState.dragType === "resize-end"
+      ) {
+        if (dragState.startPos) {
+          row = dragState.startPos.row;
+        }
+      }
 
       // 유효한 범위 내에서만 처리
       if (
