@@ -66,22 +66,38 @@ export const getTaskPreview = (
 
   const { dragType, taskId, currentPos } = dragState;
 
-  if (dragType === "move" && taskId) {
+  if (taskId) {
     const originalTask = tasks.find((t) => t.id === taskId);
-    if (!originalTask) return null;
+    if (!originalTask || row !== currentPos.row) return null;
 
-    const taskDuration =
-      dates.indexOf(originalTask.endDate) -
-      dates.indexOf(originalTask.startDate);
-    const previewStartCol = currentPos.col;
-    const previewEndCol = previewStartCol + taskDuration;
+    const originalStartCol = dates.indexOf(originalTask.startDate);
+    const originalEndCol = dates.indexOf(originalTask.endDate);
 
-    if (
-      row === currentPos.row &&
-      col >= previewStartCol &&
-      col <= previewEndCol
-    ) {
-      return { ...originalTask, isPreview: true };
+    if (dragType === "move") {
+      // 이동 프리뷰
+      const taskDuration = originalEndCol - originalStartCol;
+      const previewStartCol = currentPos.col;
+      const previewEndCol = previewStartCol + taskDuration;
+
+      if (col >= previewStartCol && col <= previewEndCol) {
+        return { ...originalTask, isPreview: true };
+      }
+    } else if (dragType === "resize-start") {
+      // 시작점 리사이즈 프리뷰
+      const previewStartCol = Math.min(currentPos.col, originalEndCol);
+      const previewEndCol = originalEndCol;
+
+      if (col >= previewStartCol && col <= previewEndCol) {
+        return { ...originalTask, isPreview: true };
+      }
+    } else if (dragType === "resize-end") {
+      // 끝점 리사이즈 프리뷰
+      const previewStartCol = originalStartCol;
+      const previewEndCol = Math.max(currentPos.col, originalStartCol);
+
+      if (col >= previewStartCol && col <= previewEndCol) {
+        return { ...originalTask, isPreview: true };
+      }
     }
   }
 

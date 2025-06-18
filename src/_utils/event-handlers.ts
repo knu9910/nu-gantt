@@ -29,29 +29,22 @@ export const createMouseDownHandler = (
       const existingTask = getTaskForCell(row, col, tasks, dates);
 
       if (existingTask) {
-        // 기존 태스크 클릭 - 이동 모드
-        const taskStartCol = dates.indexOf(existingTask.startDate);
-        const taskEndCol = dates.indexOf(existingTask.endDate);
+        // 리사이즈 핸들에서 클릭했는지 확인
+        const resizeType = (
+          e.nativeEvent as MouseEvent & { resizeType?: string }
+        )?.resizeType;
 
-        // 태스크의 시작/끝 부분인지 확인 (리사이즈 모드)
-        if (col === taskStartCol) {
+        if (resizeType) {
+          // 리사이즈 핸들 클릭 - 리사이즈 모드
           setDragState({
             isDragging: true,
-            dragType: "resize-start",
-            taskId: existingTask.id,
-            startPos: { row, col },
-            currentPos: { row, col },
-          });
-        } else if (col === taskEndCol) {
-          setDragState({
-            isDragging: true,
-            dragType: "resize-end",
+            dragType: resizeType as "resize-start" | "resize-end",
             taskId: existingTask.id,
             startPos: { row, col },
             currentPos: { row, col },
           });
         } else {
-          // 태스크 중간 부분 - 이동 모드
+          // 일반 태스크 영역 클릭 - 이동 모드
           setDragState({
             isDragging: true,
             dragType: "move",
