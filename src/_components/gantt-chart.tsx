@@ -51,6 +51,8 @@ export interface DragState {
   startPos?: { row: number; col: number };
   currentPos?: { row: number; col: number };
   clickOffset?: number;
+  startTime?: number;
+  startMousePos?: { x: number; y: number };
 }
 
 // 드래그 선택 영역 상태 추가
@@ -126,7 +128,12 @@ export const GanttChart: React.FC = () => {
     dates,
     setDragState,
     setDragSelection,
-    setTasks
+    setTasks,
+    (task, e) => {
+      // MouseEvent를 React.MouseEvent로 변환
+      const reactEvent = e as unknown as React.MouseEvent;
+      handleTaskClick(task, reactEvent);
+    }
   );
 
   const handleRightClick = createRightClickHandler(
@@ -227,11 +234,15 @@ export const GanttChart: React.FC = () => {
   }, [tasks, dragState.isDragging]);
 
   useEffect(() => {
+    const handleDocumentMouseUp = (e: MouseEvent) => {
+      handleMouseUp(e);
+    };
+
     document.addEventListener("click", handleClickOutside);
-    document.addEventListener("mouseup", handleMouseUp);
+    document.addEventListener("mouseup", handleDocumentMouseUp);
     return () => {
       document.removeEventListener("click", handleClickOutside);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mouseup", handleDocumentMouseUp);
     };
   }, [handleClickOutside, handleMouseUp]);
 

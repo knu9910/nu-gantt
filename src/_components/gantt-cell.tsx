@@ -162,9 +162,29 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                 }
               }}
             >
-              <span className="text-white text-xs font-medium truncate px-2 w-full text-center">
+              <div
+                className="task-name"
+                style={{
+                  position: "absolute",
+                  left: "8px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "white",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  pointerEvents: "none",
+                  zIndex: 10,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: `${Math.max(
+                    (taskEndIndex - taskStartIndex + 1) * 60 - 16,
+                    0
+                  )}px`,
+                }}
+              >
                 {task.name}
-              </span>
+              </div>
             </div>
           )}
 

@@ -48,6 +48,8 @@ export const createMouseDownHandler = (
           startPos: { row, col },
           currentPos: { row, col },
           clickOffset: clickOffset, // 클릭 오프셋 저장
+          startTime: Date.now(), // 클릭 시작 시간 저장
+          startMousePos: { x: e.clientX, y: e.clientY }, // 클릭 시작 마우스 위치 저장
         });
       } else {
         // 빈 셀 클릭 - 새 태스크 생성 모드
@@ -56,6 +58,8 @@ export const createMouseDownHandler = (
           dragType: "new",
           startPos: { row, col },
           currentPos: { row, col },
+          startTime: Date.now(),
+          startMousePos: { x: e.clientX, y: e.clientY },
         });
       }
 
@@ -113,15 +117,48 @@ export const createMouseUpHandler = (
   dates: string[],
   setDragState: React.Dispatch<React.SetStateAction<DragState>>,
   setDragSelection: React.Dispatch<React.SetStateAction<DragSelection>>,
-  setTasks: React.Dispatch<React.SetStateAction<Task[]>>
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>,
+  onTaskClick?: (task: Task, e: MouseEvent) => void
 ) => {
-  return () => {
+  return (e?: MouseEvent) => {
     if (!dragState.isDragging || !dragState.startPos || !dragState.currentPos) {
       setDragState({ isDragging: false, dragType: "new" });
       return;
     }
 
-    const { dragType, taskId, startPos, currentPos, clickOffset } = dragState;
+    const {
+      dragType,
+      taskId,
+      startPos,
+      currentPos,
+      clickOffset,
+      startTime,
+      startMousePos,
+    } = dragState;
+
+    // 클릭인지 드래그인지 판단
+    const isClick = () => {
+      if (!startTime || !startMousePos || !e) return false;
+
+      const timeDiff = Date.now() - startTime;
+      const mouseDiff = Math.sqrt(
+        Math.pow(e.clientX - startMousePos.x, 2) +
+          Math.pow(e.clientY - startMousePos.y, 2)
+      );
+
+      // 300ms 이내이고 5px 이내 움직임이면 클릭으로 판단
+      return timeDiff < 300 && mouseDiff < 5;
+    };
+
+    // 태스크 클릭 처리
+    if (dragType === "move" && taskId && isClick() && onTaskClick && e) {
+      const task = tasks.find((t) => t.id === taskId);
+      if (task) {
+        onTaskClick(task, e);
+        setDragState({ isDragging: false, dragType: "new" });
+        return;
+      }
+    }
 
     if (dragType === "new") {
       // 새 태스크 생성 - 바로 생성하지 않고 드래그 선택 영역으로 저장
