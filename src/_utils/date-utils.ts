@@ -6,15 +6,15 @@ import { Task } from "../_components/gantt-chart";
 
 /**
  * 태스크 기준으로 동적 날짜 범위 생성
- * - 태스크가 없으면: 현재 날짜부터 30일
+ * - 태스크가 없으면: 현재 날짜부터 5달
  * - 태스크가 있으면: 최소 한 달, 태스크 범위가 한 달보다 크면 태스크 1주일 전후까지
  */
 export const generateDates = (tasks: Task[]): string[] => {
   if (tasks.length === 0) {
-    // 태스크가 없으면 현재 날짜부터 30일
+    // 태스크가 없으면 현재 날짜부터 5달
     const dates = [];
     const today = new Date();
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 150; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
       dates.push(date.toISOString().split("T")[0]);

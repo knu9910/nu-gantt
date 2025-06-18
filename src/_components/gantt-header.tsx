@@ -1,5 +1,4 @@
 import React from "react";
-import { formatDateToKorean } from "../_utils/date-utils";
 import { isColumnSelected } from "../_utils/selection-utils";
 import { ColumnSelection } from "./gantt-chart";
 
@@ -9,30 +8,75 @@ interface GanttHeaderProps {
   onColumnClick: (colIndex: number, e: React.MouseEvent) => void;
 }
 
+// 월별 그룹화 함수
+const groupDatesByMonth = (dates: string[]) => {
+  const monthGroups: { month: string; startIndex: number; count: number }[] =
+    [];
+
+  dates.forEach((date, index) => {
+    const dateObj = new Date(date);
+    const monthKey = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월`;
+
+    const lastGroup = monthGroups[monthGroups.length - 1];
+    if (lastGroup && lastGroup.month === monthKey) {
+      lastGroup.count++;
+    } else {
+      monthGroups.push({
+        month: monthKey,
+        startIndex: index,
+        count: 1,
+      });
+    }
+  });
+
+  return monthGroups;
+};
+
 export const GanttHeader: React.FC<GanttHeaderProps> = ({
   dates,
   columnSelection,
   onColumnClick,
 }) => {
+  const monthGroups = groupDatesByMonth(dates);
+
   return (
     <div className="sticky top-0 bg-white z-10">
+      {/* 월 헤더 */}
       <div className="flex">
-        {dates.map((date, colIndex) => (
+        {monthGroups.map((group, groupIndex) => (
           <div
-            key={date}
-            className={`
-              min-w-[60px] h-12 p-2 border-r border-b border-gray-300 text-xs font-medium text-center cursor-pointer
-              ${
-                isColumnSelected(columnSelection, colIndex)
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-50 hover:bg-gray-200"
-              }
-            `}
-            onClick={(e) => onColumnClick(colIndex, e)}
+            key={`month-${groupIndex}`}
+            className="bg-gray-100 border-r border-b border-gray-300 text-sm font-bold text-center py-2"
+            style={{ width: `${group.count * 60}px` }}
           >
-            {formatDateToKorean(date)}
+            {group.month}
           </div>
         ))}
+      </div>
+
+      {/* 일 헤더 (숫자만) */}
+      <div className="flex">
+        {dates.map((date, colIndex) => {
+          const dateObj = new Date(date);
+          const day = dateObj.getDate();
+
+          return (
+            <div
+              key={date}
+              className={`
+                min-w-[60px] h-10 p-2 border-r border-b border-gray-300 text-xs font-medium text-center cursor-pointer flex items-center justify-center
+                ${
+                  isColumnSelected(columnSelection, colIndex)
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-50 hover:bg-gray-200"
+                }
+              `}
+              onClick={(e) => onColumnClick(colIndex, e)}
+            >
+              {day}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
