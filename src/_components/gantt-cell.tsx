@@ -114,6 +114,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
       style={{
         width: `${CELL_WIDTH}px`,
         height: `${CELL_HEIGHT}px`,
+        minWidth: `${CELL_WIDTH}px`,
+        maxWidth: `${CELL_WIDTH}px`,
         backgroundColor:
           task && !isDraggingThisTask
             ? task.color

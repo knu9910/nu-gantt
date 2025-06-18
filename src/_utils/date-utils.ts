@@ -13,20 +13,6 @@ export const formatDate = (date: Date): string => {
 };
 
 /**
- * 날짜를 한국어 형식으로 변환 (예: "12월 25일 (월)")
- */
-export const formatDateToKorean = (date: string): string => {
-  const dateObj = new Date(date);
-  const month = dateObj.getMonth() + 1;
-  const day = dateObj.getDate();
-  const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
-    dateObj.getDay()
-  ];
-
-  return `${month}월 ${day}일 (${dayOfWeek})`;
-};
-
-/**
  * 태스크들의 날짜 범위를 기반으로 간트 차트에 표시할 날짜 배열 생성
  */
 export const generateDates = (tasks: Task[]): string[] => {

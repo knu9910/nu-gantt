@@ -2,6 +2,7 @@ import React from "react";
 import { isColumnSelected } from "../_utils/selection-utils";
 import { ColumnSelection } from "./gantt-chart";
 import { CELL_WIDTH, DAY_HEADER_HEIGHT } from "../_constants/gantt-constants";
+import { format } from "date-fns";
 
 interface GanttHeaderProps {
   dates: string[];
@@ -16,7 +17,7 @@ const groupDatesByMonth = (dates: string[]) => {
 
   dates.forEach((date, index) => {
     const dateObj = new Date(date);
-    const monthKey = `${dateObj.getFullYear()}년 ${dateObj.getMonth() + 1}월`;
+    const monthKey = `${format(dateObj, "yyyy년 MM월")}`;
 
     const lastGroup = monthGroups[monthGroups.length - 1];
     if (lastGroup && lastGroup.month === monthKey) {
@@ -48,7 +49,11 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
           <div
             key={`month-${groupIndex}`}
             className="bg-gray-100 border-r border-b border-gray-300 text-sm font-bold text-center py-2"
-            style={{ width: `${group.count * CELL_WIDTH}px` }}
+            style={{
+              width: `${group.count * CELL_WIDTH}px`,
+              minWidth: `${group.count * CELL_WIDTH}px`,
+              maxWidth: `${group.count * CELL_WIDTH}px`,
+            }}
           >
             {group.month}
           </div>
