@@ -4,12 +4,12 @@
 
 // 셀 크기 관련
 export const CELL_WIDTH = 20; // 날짜 셀 너비 (px)
-export const CELL_HEIGHT = 40; // 태스크 셀 높이 (px)
+export const CELL_HEIGHT = 28; // 태스크 셀 높이 (px)
 
 // 헤더 관련
 export const HEADER_HEIGHT = 40; // 헤더 높이 (px)
 export const MONTH_HEADER_HEIGHT = 32; // 월 헤더 높이 (px)
-export const DAY_HEADER_HEIGHT = 40; // 일 헤더 높이 (px)
+export const DAY_HEADER_HEIGHT = 24; // 일 헤더 높이 (px)
 
 // 드래그 관련
 export const CLICK_THRESHOLD_TIME = 300; // 클릭 판단 시간 (ms)

@@ -31,10 +31,16 @@ export const createMouseDownHandler = (
   contextMenu: ContextMenuState,
   setDragState: React.Dispatch<React.SetStateAction<DragState>>,
   setContextMenu: React.Dispatch<React.SetStateAction<ContextMenuState>>,
-  tasks: Task[]
+  tasks: Task[],
+  setDragSelection?: React.Dispatch<React.SetStateAction<DragSelection>>
 ) => {
   return (row: number, col: number, e: React.MouseEvent) => {
     if (e.button === 0) {
+      // 왼쪽 클릭 시 항상 드래그 선택 영역 해제
+      if (setDragSelection) {
+        setDragSelection({ isSelected: false });
+      }
+
       const existingTask = getTaskForCell(row, col, tasks, dates);
 
       if (existingTask) {

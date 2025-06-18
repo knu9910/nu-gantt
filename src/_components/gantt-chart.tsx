@@ -117,7 +117,8 @@ export const GanttChart: React.FC = () => {
     contextMenu,
     setDragState,
     setContextMenu,
-    tasks
+    tasks,
+    setDragSelection
   );
 
   const handleMouseEnter = createMouseEnterHandler(dragState, setDragState);

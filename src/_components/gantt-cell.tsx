@@ -98,7 +98,9 @@ export const GanttCell: React.FC<GanttCellProps> = ({
     <div
       key={`${rowIndex}-${colIndex}`}
       className={`
-        border-r border-b border-gray-200 relative cursor-pointer
+        ${
+          task && !isDraggingThisTask ? "" : "border-r border-b border-gray-200"
+        } relative cursor-pointer
         ${
           isInDragArea
             ? "bg-blue-200"
