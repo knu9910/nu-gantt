@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Task,
-  DragState,
-  DragSelection,
-  ColumnSelection,
-  MonthSelection,
-  GanttCellProps,
-} from "../types/gantt-types";
+import { GanttCellProps } from "../types/gantt-types";
 import {
   isCellInDragArea,
   isCellInDragSelection,
