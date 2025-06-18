@@ -16,7 +16,7 @@ export const CLICK_THRESHOLD_TIME = 300; // 클릭 판단 시간 (ms)
 export const CLICK_THRESHOLD_DISTANCE = 5; // 클릭 판단 거리 (px)
 
 // 리사이즈 핸들 관련
-export const RESIZE_HANDLE_WIDTH = 2; // 리사이즈 핸들 너비 (px)
+export const RESIZE_HANDLE_WIDTH = 4; // 리사이즈 핸들 너비 (px)
 
 // 태스크 관련
 export const TASK_NAME_PADDING = 8; // 태스크 이름 패딩 (px)

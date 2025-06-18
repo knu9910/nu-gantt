@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { taskColors } from "@/app/constants/task-colors";
+import { taskColors } from "@/_constants/task-colors";
 
 // Utils imports
 import { generateDates } from "../_utils/date-utils";
