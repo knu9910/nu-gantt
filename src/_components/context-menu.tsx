@@ -1,14 +1,5 @@
 import React from "react";
-import { Task } from "./gantt-chart";
-
-interface ContextMenuProps {
-  show: boolean;
-  x: number;
-  y: number;
-  task?: Task;
-  onCreateTask: () => void;
-  onDeleteTask?: (taskId: string) => void;
-}
+import { ContextMenuProps } from "../types/gantt-types";
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
   show,

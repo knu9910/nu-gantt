@@ -1,11 +1,21 @@
 import React from "react";
-import { Task, DragState, DragSelection, ColumnSelection } from "./gantt-chart";
+import {
+  Task,
+  DragState,
+  DragSelection,
+  ColumnSelection,
+  MonthSelection,
+  GanttCellProps,
+} from "../types/gantt-types";
 import {
   isCellInDragArea,
   isCellInDragSelection,
   getTaskPreview,
 } from "../_utils/drag-utils";
-import { isColumnSelected } from "../_utils/selection-utils";
+import {
+  isColumnSelected,
+  isColumnInMonthSelection,
+} from "../_utils/selection-utils";
 import { getTaskForCell } from "../_utils/task-utils";
 import {
   CELL_WIDTH,
@@ -15,30 +25,6 @@ import {
   TASK_BORDER_OFFSET,
 } from "../_constants/gantt-constants";
 
-interface GanttCellProps {
-  rowIndex: number;
-  colIndex: number;
-  dates: string[];
-  tasks: Task[];
-  dragState: DragState;
-  dragSelection: DragSelection;
-  columnSelection: ColumnSelection;
-  onMouseDown: (
-    rowIndex: number,
-    colIndex: number,
-    e: React.MouseEvent
-  ) => void;
-  onMouseEnter: (rowIndex: number, colIndex: number) => void;
-  onContextMenu: (
-    rowIndex: number,
-    colIndex: number,
-    e: React.MouseEvent
-  ) => void;
-  onTaskClick?: (task: Task, e: React.MouseEvent) => void;
-  onResizeStart?: (rowIndex: number, colIndex: number, taskId: string) => void;
-  onResizeEnd?: (rowIndex: number, colIndex: number, taskId: string) => void;
-}
-
 export const GanttCell: React.FC<GanttCellProps> = ({
   rowIndex,
   colIndex,
@@ -47,6 +33,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
   dragState,
   dragSelection,
   columnSelection,
+  monthSelection,
   onMouseDown,
   onMouseEnter,
   onContextMenu,
@@ -71,6 +58,9 @@ export const GanttCell: React.FC<GanttCellProps> = ({
   const isDraggingThisTask =
     dragState.isDragging && dragState.taskId === task?.id;
   const isColumnSelectedCell = isColumnSelected(columnSelection, colIndex);
+
+  // 월 선택 확인
+  const isMonthSelected = isColumnInMonthSelection(monthSelection, colIndex);
 
   // 태스크의 시작과 끝 인덱스 계산
   const taskStartIndex = task ? dates.indexOf(task.startDate) : -1;
@@ -106,7 +96,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             ? "bg-blue-200"
             : isInDragSelection
             ? "bg-yellow-200 border-2 border-yellow-400"
-            : isColumnSelectedCell
+            : isColumnSelectedCell || isMonthSelected
             ? "bg-blue-100"
             : "hover:bg-gray-100"
         }

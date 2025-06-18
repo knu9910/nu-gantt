@@ -1,4 +1,4 @@
-import { ColumnSelection, MonthSelection } from "../_components/gantt-chart";
+import { ColumnSelection, MonthSelection } from "../types/gantt-types";
 
 // ==========================================
 // 선택 관련 유틸리티 함수들

@@ -25,61 +25,20 @@ import {
 } from "../_utils/selection-utils";
 
 // Component imports
-import { ContextMenu } from "./context-menu";
-import { TaskList } from "./task-list";
 import { GanttHeader } from "./gantt-header";
 import { GanttCell } from "./gantt-cell";
+import { ContextMenu } from "./context-menu";
 import { TaskEditModal } from "./task-edit-modal";
-
-export interface Task {
-  id: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  row: number;
-  color: string;
-}
-
-export interface ContextMenuState {
-  show: boolean;
-  x: number;
-  y: number;
-  row: number;
-  col: number;
-  task?: Task;
-}
-
-export interface DragState {
-  isDragging: boolean;
-  dragType: "new" | "move" | "resize-start" | "resize-end";
-  taskId?: string;
-  startPos?: { row: number; col: number };
-  currentPos?: { row: number; col: number };
-  clickOffset?: number;
-  startTime?: number;
-  startMousePos?: { x: number; y: number };
-}
-
-// 드래그 선택 영역 상태 추가
-export interface DragSelection {
-  isSelected: boolean;
-  startPos?: { row: number; col: number };
-  endPos?: { row: number; col: number };
-}
-
-// 선택된 열 상태 추가
-export interface ColumnSelection {
-  isSelected: boolean;
-  selectedColumn: number | null;
-}
-
-// 선택된 월 상태 추가
-export interface MonthSelection {
-  isSelected: boolean;
-  selectedMonth: string | null;
-  startIndex: number;
-  endIndex: number;
-}
+import { TaskList } from "./task-list";
+import {
+  Task,
+  DragState,
+  ContextMenuState,
+  ColumnSelection,
+  DragSelection,
+  MonthSelection,
+  TaskEditModalState,
+} from "../types/gantt-types";
 
 export const GanttChart: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -121,10 +80,7 @@ export const GanttChart: React.FC = () => {
   });
 
   // 태스크 편집 모달 상태 추가
-  const [editModal, setEditModal] = useState<{
-    show: boolean;
-    task: Task | null;
-  }>({
+  const [editModal, setEditModal] = useState<TaskEditModalState>({
     show: false,
     task: null,
   });

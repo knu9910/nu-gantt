@@ -1,10 +1,5 @@
 import React from "react";
-import { Task } from "./gantt-chart";
-
-interface TaskListProps {
-  tasks: Task[];
-  onDeleteTask: (taskId: string) => void;
-}
+import { TaskListProps } from "../types/gantt-types";
 
 export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask }) => {
   return (

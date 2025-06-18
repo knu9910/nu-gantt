@@ -1,4 +1,4 @@
-import { Task, DragState, DragSelection } from "../_components/gantt-chart";
+import { Task, DragState, DragSelection } from "../types/gantt-types";
 import {
   CELL_WIDTH,
   CELL_HEIGHT,

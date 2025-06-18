@@ -2,7 +2,7 @@
  * 태스크 위치로 스크롤하는 유틸리티 함수들
  */
 
-import { Task } from "../_components/gantt-chart";
+import { Task } from "../types/gantt-types";
 import {
   CELL_WIDTH,
   CELL_HEIGHT,

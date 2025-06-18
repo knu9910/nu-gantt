@@ -1,16 +1,8 @@
 import React from "react";
+import { GanttHeaderProps } from "../types/gantt-types";
 import { isColumnSelected } from "../_utils/selection-utils";
-import { ColumnSelection, MonthSelection } from "./gantt-chart";
 import { CELL_WIDTH, DAY_HEADER_HEIGHT } from "../_constants/gantt-constants";
 import { format } from "date-fns";
-
-interface GanttHeaderProps {
-  dates: string[];
-  columnSelection: ColumnSelection;
-  monthSelection: MonthSelection;
-  onColumnClick: (colIndex: number, e: React.MouseEvent) => void;
-  onMonthClick: (monthKey: string, startIndex: number, count: number) => void;
-}
 
 // 월별 그룹화 함수
 const groupDatesByMonth = (dates: string[]) => {

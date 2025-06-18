@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Task } from "./gantt-chart";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,16 +11,9 @@ import {
   DialogPortal,
   DialogOverlay,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-interface TaskEditModalProps {
-  show: boolean;
-  task: Task | null;
-  onSave: (taskId: string, newName: string) => void;
-  onCancel: () => void;
-}
+import { TaskEditModalProps } from "../types/gantt-types";
 
 export const TaskEditModal: React.FC<TaskEditModalProps> = ({
   show,

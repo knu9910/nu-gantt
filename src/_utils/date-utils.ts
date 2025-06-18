@@ -1,4 +1,4 @@
-import { Task } from "../_components/gantt-chart";
+import { Task } from "../types/gantt-types";
 import { DEFAULT_DATE_RANGE_DAYS } from "../_constants/gantt-constants";
 
 // ==========================================

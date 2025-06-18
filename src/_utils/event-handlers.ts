@@ -6,7 +6,7 @@ import {
   ColumnSelection,
   DragSelection,
   MonthSelection,
-} from "../_components/gantt-chart";
+} from "../types/gantt-types";
 import { getTaskForCell } from "./task-utils";
 import { createNewTask } from "./task-utils";
 import { calculateDragSelection } from "./drag-utils";

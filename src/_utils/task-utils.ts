@@ -1,5 +1,5 @@
 import React from "react";
-import { Task } from "../_components/gantt-chart";
+import { Task } from "../types/gantt-types";
 
 // ==========================================
 // 태스크 검색 및 위치 관련 유틸리티 함수들
