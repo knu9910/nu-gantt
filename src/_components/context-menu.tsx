@@ -1,17 +1,22 @@
 import React from "react";
+import { Task } from "./gantt-chart";
 
 interface ContextMenuProps {
   show: boolean;
   x: number;
   y: number;
+  task?: Task;
   onCreateTask: () => void;
+  onDeleteTask?: (taskId: string) => void;
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({
   show,
   x,
   y,
+  task,
   onCreateTask,
+  onDeleteTask,
 }) => {
   if (!show) return null;
 
@@ -20,12 +25,25 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
       className="fixed bg-white border border-gray-300 rounded-md shadow-lg z-20 py-1"
       style={{ left: x, top: y }}
     >
-      <button
-        onClick={onCreateTask}
-        className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-      >
-        태스크 생성
-      </button>
+      {task ? (
+        <button
+          onClick={() => {
+            if (onDeleteTask) {
+              onDeleteTask(task.id);
+            }
+          }}
+          className="block w-full text-left px-4 py-2 text-sm hover:bg-red-100 text-red-600"
+        >
+          태스크 삭제
+        </button>
+      ) : (
+        <button
+          onClick={onCreateTask}
+          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+        >
+          태스크 생성
+        </button>
+      )}
     </div>
   );
 };

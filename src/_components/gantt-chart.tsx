@@ -42,6 +42,7 @@ export interface ContextMenuState {
   y: number;
   row: number;
   col: number;
+  task?: Task;
 }
 
 export interface DragState {
@@ -308,7 +309,12 @@ export const GanttChart: React.FC = () => {
         show={contextMenu.show}
         x={contextMenu.x}
         y={contextMenu.y}
+        task={contextMenu.task}
         onCreateTask={createTaskFromContext}
+        onDeleteTask={(taskId) => {
+          deleteTask(taskId);
+          setContextMenu({ ...contextMenu, show: false });
+        }}
       />
 
       {/* 태스크 편집 모달 */}

@@ -318,15 +318,15 @@ export const createRightClickHandler = (
     e.preventDefault();
     const existingTask = getTaskForCell(row, col, tasks, dates);
 
-    if (!existingTask) {
-      setContextMenu({
-        show: true,
-        x: e.clientX,
-        y: e.clientY,
-        row,
-        col,
-      });
-    }
+    // 태스크가 있든 없든 컨텍스트 메뉴 표시
+    setContextMenu({
+      show: true,
+      x: e.clientX,
+      y: e.clientY,
+      row,
+      col,
+      task: existingTask, // 태스크 정보 추가
+    });
   };
 };
 
