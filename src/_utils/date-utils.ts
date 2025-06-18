@@ -1,5 +1,8 @@
 import { Task } from "../types/gantt-types";
-import { DEFAULT_DATE_RANGE_DAYS } from "../_constants/gantt-constants";
+import {
+  DEFAULT_DATE_RANGE_DAYS,
+  DATE_RANGE_BUFFER_DAYS,
+} from "../_constants/gantt-constants";
 
 // ==========================================
 // 날짜 관련 유틸리티 함수들
@@ -112,8 +115,8 @@ export const generateDates = (tasks: Task[]): string[] => {
   );
 
   // 시작일을 일주일 앞당기고, 종료일을 일주일 뒤로 연장
-  minDate.setDate(minDate.getDate() - 7);
-  maxDate.setDate(maxDate.getDate() + 7);
+  minDate.setDate(minDate.getDate() - DATE_RANGE_BUFFER_DAYS);
+  maxDate.setDate(maxDate.getDate() + DATE_RANGE_BUFFER_DAYS);
 
   // 월별 최소 날짜 수 보장을 위한 범위 조정
   const { adjustedStart, adjustedEnd } = adjustDateRangeForMonthlyMinimum(

@@ -27,3 +27,4 @@ export const SCROLL_DELAY = 100; // 스크롤 딜레이 (ms)
 
 // 기본 날짜 범위
 export const DEFAULT_DATE_RANGE_DAYS = 150; // 태스크가 없을 때 기본 날짜 범위 (일)
+export const DATE_RANGE_BUFFER_DAYS = 30; // 태스크 날짜 범위 앞뒤 버퍼 (일)
