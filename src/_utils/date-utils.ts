@@ -114,7 +114,7 @@ export const generateDates = (tasks: Task[]): string[] => {
     Math.max(...allDates.map((d) => new Date(d).getTime()))
   );
 
-  // 시작일을 일주일 앞당기고, 종료일을 일주일 뒤로 연장
+  // 시작일을 상수만큼 앞당기고, 종료일을 상수만큼 뒤로 연장
   minDate.setDate(minDate.getDate() - DATE_RANGE_BUFFER_DAYS);
   maxDate.setDate(maxDate.getDate() + DATE_RANGE_BUFFER_DAYS);
 

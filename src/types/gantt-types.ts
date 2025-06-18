@@ -15,6 +15,25 @@ export type Task = {
 };
 
 /**
+ * 휴일 타입
+ */
+export type Holiday = {
+  date: string; // YYYY-MM-DD 형식
+  name: string; // 휴일명
+  isHoliday: boolean; // 휴일 여부
+};
+
+/**
+ * 날짜 범위 타입
+ */
+export type DateRange = {
+  startYear: number;
+  startMonth: number;
+  endYear: number;
+  endMonth: number;
+};
+
+/**
  * 컨텍스트 메뉴 상태 타입
  */
 export type ContextMenuState = {
@@ -91,6 +110,7 @@ export type GanttCellProps = {
   colIndex: number;
   dates: string[];
   tasks: Task[];
+  holidays: Holiday[];
   dragState: DragState;
   dragSelection: DragSelection;
   columnSelection: ColumnSelection;
