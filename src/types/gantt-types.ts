@@ -7,7 +7,7 @@
  */
 export type Task = {
   id: string;
-  name: string;
+  name?: string;
   startDate: string;
   endDate: string;
   row: number;

@@ -25,12 +25,12 @@ export const TaskEditModal: React.FC<TaskEditModalProps> = ({
 
   useEffect(() => {
     if (task) {
-      setTaskName(task.name);
+      setTaskName(task.name || "");
     }
   }, [task]);
 
   const handleSave = () => {
-    if (task && taskName.trim()) {
+    if (task) {
       onSave(task.id, taskName.trim());
       setTaskName("");
     }
@@ -90,7 +90,6 @@ export const TaskEditModal: React.FC<TaskEditModalProps> = ({
             </Button>
             <Button
               onClick={handleSave}
-              disabled={!taskName.trim()}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               저장

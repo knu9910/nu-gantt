@@ -92,7 +92,7 @@ export const createNewTask = (
 ): Task => {
   return {
     id: Date.now().toString(),
-    name: `새 태스크 ${tasks.length + 1}`,
+    name: ``,
     startDate: dates[startCol],
     endDate: dates[endCol],
     row: row,
