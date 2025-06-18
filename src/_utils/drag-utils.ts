@@ -1,0 +1,126 @@
+import { Task, DragState, DragSelection } from "../_components/gantt-chart";
+
+// ==========================================
+// 드래그 영역 관련 유틸리티 함수들
+// ==========================================
+
+/**
+ * 셀이 드래그 영역에 포함되는지 확인 (새 태스크 생성용)
+ */
+export const isCellInDragArea = (
+  row: number,
+  col: number,
+  dragState: DragState
+): boolean => {
+  if (!dragState.isDragging || !dragState.startPos || !dragState.currentPos) {
+    return false;
+  }
+
+  const { dragType, startPos, currentPos } = dragState;
+
+  if (dragType === "new") {
+    const minRow = Math.min(startPos.row, currentPos.row);
+    const maxRow = Math.max(startPos.row, currentPos.row);
+    const minCol = Math.min(startPos.col, currentPos.col);
+    const maxCol = Math.max(startPos.col, currentPos.col);
+
+    return row >= minRow && row <= maxRow && col >= minCol && col <= maxCol;
+  }
+
+  return false;
+};
+
+/**
+ * 셀이 드래그 선택 영역에 포함되는지 확인
+ */
+export const isCellInDragSelection = (
+  row: number,
+  col: number,
+  dragSelection: DragSelection
+): boolean => {
+  if (
+    !dragSelection.isSelected ||
+    !dragSelection.startPos ||
+    !dragSelection.endPos
+  ) {
+    return false;
+  }
+
+  const { startPos, endPos } = dragSelection;
+  return row === startPos.row && col >= startPos.col && col <= endPos.col;
+};
+
+/**
+ * 드래그 중인 태스크의 미리보기 정보 계산
+ */
+export const getTaskPreview = (
+  row: number,
+  col: number,
+  dragState: DragState,
+  tasks: Task[],
+  dates: string[]
+): (Task & { isPreview: boolean }) | null => {
+  if (!dragState.isDragging || !dragState.startPos || !dragState.currentPos) {
+    return null;
+  }
+
+  const { dragType, taskId, currentPos } = dragState;
+
+  if (dragType === "move" && taskId) {
+    const originalTask = tasks.find((t) => t.id === taskId);
+    if (!originalTask) return null;
+
+    const taskDuration =
+      dates.indexOf(originalTask.endDate) -
+      dates.indexOf(originalTask.startDate);
+    const previewStartCol = currentPos.col;
+    const previewEndCol = previewStartCol + taskDuration;
+
+    if (
+      row === currentPos.row &&
+      col >= previewStartCol &&
+      col <= previewEndCol
+    ) {
+      return { ...originalTask, isPreview: true };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * 드래그 타입 결정 (태스크 클릭 시)
+ */
+export const getDragType = (
+  task: Task,
+  clickedCol: number,
+  dates: string[]
+): "move" | "resize-start" | "resize-end" => {
+  const taskStartCol = dates.indexOf(task.startDate);
+  const taskEndCol = dates.indexOf(task.endDate);
+
+  if (clickedCol === taskStartCol) {
+    return "resize-start";
+  } else if (clickedCol === taskEndCol) {
+    return "resize-end";
+  } else {
+    return "move";
+  }
+};
+
+/**
+ * 드래그 선택 범위 계산
+ */
+export const calculateDragSelection = (
+  startPos: { row: number; col: number },
+  currentPos: { row: number; col: number }
+): DragSelection => {
+  const startCol = Math.min(startPos.col, currentPos.col);
+  const endCol = Math.max(startPos.col, currentPos.col);
+
+  return {
+    isSelected: true,
+    startPos: { row: startPos.row, col: startCol },
+    endPos: { row: startPos.row, col: endCol },
+  };
+};
