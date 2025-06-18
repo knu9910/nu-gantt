@@ -29,30 +29,14 @@ export const createMouseDownHandler = (
       const existingTask = getTaskForCell(row, col, tasks, dates);
 
       if (existingTask) {
-        // 리사이즈 핸들에서 클릭했는지 확인
-        const resizeType = (
-          e.nativeEvent as MouseEvent & { resizeType?: string }
-        )?.resizeType;
-
-        if (resizeType) {
-          // 리사이즈 핸들 클릭 - 리사이즈 모드
-          setDragState({
-            isDragging: true,
-            dragType: resizeType as "resize-start" | "resize-end",
-            taskId: existingTask.id,
-            startPos: { row, col },
-            currentPos: { row, col },
-          });
-        } else {
-          // 일반 태스크 영역 클릭 - 이동 모드
-          setDragState({
-            isDragging: true,
-            dragType: "move",
-            taskId: existingTask.id,
-            startPos: { row, col },
-            currentPos: { row, col },
-          });
-        }
+        // 태스크 영역 클릭 - 이동 모드
+        setDragState({
+          isDragging: true,
+          dragType: "move",
+          taskId: existingTask.id,
+          startPos: { row, col },
+          currentPos: { row, col },
+        });
       } else {
         // 빈 셀 클릭 - 새 태스크 생성 모드
         setDragState({
@@ -64,7 +48,10 @@ export const createMouseDownHandler = (
       }
 
       setContextMenu({ ...contextMenu, show: false });
-      e.preventDefault();
+      // preventDefault가 존재하는 경우에만 호출
+      if (e.preventDefault && typeof e.preventDefault === "function") {
+        e.preventDefault();
+      }
     }
   };
 };

@@ -28,6 +28,8 @@ interface GanttCellProps {
     e: React.MouseEvent
   ) => void;
   onTaskClick?: (task: Task, e: React.MouseEvent) => void;
+  onResizeStart?: (rowIndex: number, colIndex: number, taskId: string) => void;
+  onResizeEnd?: (rowIndex: number, colIndex: number, taskId: string) => void;
 }
 
 export const GanttCell: React.FC<GanttCellProps> = ({
@@ -42,6 +44,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
   onMouseEnter,
   onContextMenu,
   onTaskClick,
+  onResizeStart,
+  onResizeEnd,
 }) => {
   const task = getTaskForCell(rowIndex, colIndex, tasks, dates);
   const taskPreview = getTaskPreview(
@@ -73,15 +77,13 @@ export const GanttCell: React.FC<GanttCellProps> = ({
     type: "start" | "end"
   ) => {
     e.stopPropagation();
+    e.preventDefault();
     if (task) {
-      // 리사이즈 타입에 따라 드래그 상태 설정
-      const dragType = type === "start" ? "resize-start" : "resize-end";
-      onMouseDown(rowIndex, colIndex, {
-        ...e,
-        button: 0,
-        // 커스텀 속성으로 리사이즈 타입 전달
-        nativeEvent: { ...e.nativeEvent, resizeType: dragType },
-      } as React.MouseEvent);
+      if (type === "start" && onResizeStart) {
+        onResizeStart(rowIndex, colIndex, task.id);
+      } else if (type === "end" && onResizeEnd) {
+        onResizeEnd(rowIndex, colIndex, task.id);
+      }
     }
   };
 

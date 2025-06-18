@@ -176,6 +176,36 @@ export const GanttChart: React.FC = () => {
     setEditModal({ show: false, task: null });
   };
 
+  // 리사이즈 시작 핸들러
+  const handleResizeStart = (
+    rowIndex: number,
+    colIndex: number,
+    taskId: string
+  ) => {
+    setDragState({
+      isDragging: true,
+      dragType: "resize-start",
+      taskId,
+      startPos: { row: rowIndex, col: colIndex },
+      currentPos: { row: rowIndex, col: colIndex },
+    });
+  };
+
+  // 리사이즈 끝 핸들러
+  const handleResizeEnd = (
+    rowIndex: number,
+    colIndex: number,
+    taskId: string
+  ) => {
+    setDragState({
+      isDragging: true,
+      dragType: "resize-end",
+      taskId,
+      startPos: { row: rowIndex, col: colIndex },
+      currentPos: { row: rowIndex, col: colIndex },
+    });
+  };
+
   // 태스크가 변경될 때마다 날짜 범위 업데이트 (드래그 중이 아닐 때만)
   useEffect(() => {
     if (!dragState.isDragging) {
@@ -236,6 +266,8 @@ export const GanttChart: React.FC = () => {
                   onMouseEnter={handleMouseEnter}
                   onContextMenu={handleRightClick}
                   onTaskClick={handleTaskClick}
+                  onResizeStart={handleResizeStart}
+                  onResizeEnd={handleResizeEnd}
                 />
               ))}
             </div>
