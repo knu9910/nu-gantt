@@ -1,4 +1,4 @@
-import { ColumnSelection } from "../_components/gantt-chart";
+import { ColumnSelection, MonthSelection } from "../_components/gantt-chart";
 
 // ==========================================
 // 선택 관련 유틸리티 함수들
@@ -96,4 +96,61 @@ export const toggleMultiColumnSelection = (
       selectedColumns: [...currentSelection.selectedColumns, columnIndex],
     };
   }
+};
+
+/**
+ * 월 선택 상태 토글
+ */
+export const toggleMonthSelection = (
+  currentSelection: MonthSelection,
+  monthKey: string,
+  startIndex: number,
+  count: number
+): MonthSelection => {
+  if (
+    currentSelection.isSelected &&
+    currentSelection.selectedMonth === monthKey
+  ) {
+    // 같은 월을 다시 클릭하면 선택 해제
+    return {
+      isSelected: false,
+      selectedMonth: null,
+      startIndex: 0,
+      endIndex: 0,
+    };
+  } else {
+    // 새로운 월 선택
+    return {
+      isSelected: true,
+      selectedMonth: monthKey,
+      startIndex: startIndex,
+      endIndex: startIndex + count - 1,
+    };
+  }
+};
+
+/**
+ * 월 선택 해제
+ */
+export const clearMonthSelection = (): MonthSelection => {
+  return {
+    isSelected: false,
+    selectedMonth: null,
+    startIndex: 0,
+    endIndex: 0,
+  };
+};
+
+/**
+ * 특정 열이 월 선택 범위에 포함되는지 확인
+ */
+export const isColumnInMonthSelection = (
+  monthSelection: MonthSelection,
+  columnIndex: number
+): boolean => {
+  return (
+    monthSelection.isSelected &&
+    columnIndex >= monthSelection.startIndex &&
+    columnIndex <= monthSelection.endIndex
+  );
 };

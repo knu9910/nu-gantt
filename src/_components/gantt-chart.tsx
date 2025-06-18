@@ -13,11 +13,16 @@ import {
   createGanttMouseMoveHandler,
   createTaskFromContextHandler,
   createColumnClickHandler,
+  createMonthClickHandler,
 } from "../_utils/event-handlers";
 import {
   createDeleteTaskHandler,
   createUpdateTaskNameHandler,
 } from "../_utils/task-utils";
+import {
+  clearColumnSelection,
+  clearMonthSelection,
+} from "../_utils/selection-utils";
 
 // Component imports
 import { ContextMenu } from "./context-menu";
@@ -68,6 +73,14 @@ export interface ColumnSelection {
   selectedColumn: number | null;
 }
 
+// 선택된 월 상태 추가
+export interface MonthSelection {
+  isSelected: boolean;
+  selectedMonth: string | null;
+  startIndex: number;
+  endIndex: number;
+}
+
 export const GanttChart: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dates, setDates] = useState(() => generateDates([]));
@@ -92,6 +105,14 @@ export const GanttChart: React.FC = () => {
   const [columnSelection, setColumnSelection] = useState<ColumnSelection>({
     isSelected: false,
     selectedColumn: null,
+  });
+
+  // 월 선택 상태 추가
+  const [monthSelection, setMonthSelection] = useState<MonthSelection>({
+    isSelected: false,
+    selectedMonth: null,
+    startIndex: 0,
+    endIndex: 0,
   });
 
   // 드래그 선택 영역 상태 추가
@@ -242,6 +263,31 @@ export const GanttChart: React.FC = () => {
 
   const handleColumnClick = createColumnClickHandler(setColumnSelection);
 
+  // 열 클릭 시 월 선택 해제하는 핸들러 래퍼
+  const handleColumnClickWithMonthClear = (
+    colIndex: number,
+    e: React.MouseEvent
+  ) => {
+    handleColumnClick(colIndex, e);
+    // 열 선택 시 월 선택 해제
+    setMonthSelection(clearMonthSelection());
+  };
+
+  // 월 클릭 핸들러 (utils에서 가져온 핸들러 사용)
+  const handleMonthClick = createMonthClickHandler(
+    setMonthSelection,
+    setColumnSelection
+  );
+
+  // 모든 선택 해제 함수
+  const clearAllSelections = () => {
+    setDragSelection({
+      isSelected: false,
+    });
+    setColumnSelection(clearColumnSelection());
+    setMonthSelection(clearMonthSelection());
+  };
+
   // 태스크 삭제
   const deleteTask = createDeleteTaskHandler(tasks, setTasks);
 
@@ -267,6 +313,14 @@ export const GanttChart: React.FC = () => {
           className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
         />
         <span className="text-sm text-gray-500">(현재 {rows.length}개 행)</span>
+
+        {/* 선택 해제 버튼 */}
+        <button
+          onClick={clearAllSelections}
+          className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
+        >
+          선택 해제
+        </button>
       </div>
 
       <div
@@ -280,7 +334,9 @@ export const GanttChart: React.FC = () => {
         <GanttHeader
           dates={dates}
           columnSelection={columnSelection}
-          onColumnClick={handleColumnClick}
+          monthSelection={monthSelection}
+          onColumnClick={handleColumnClickWithMonthClear}
+          onMonthClick={handleMonthClick}
         />
 
         {/* 태스크 행들 */}
@@ -298,6 +354,7 @@ export const GanttChart: React.FC = () => {
                   dragState={dragState}
                   dragSelection={dragSelection}
                   columnSelection={columnSelection}
+                  monthSelection={monthSelection}
                   onMouseDown={handleMouseDown}
                   onMouseEnter={handleMouseEnter}
                   onContextMenu={handleRightClick}

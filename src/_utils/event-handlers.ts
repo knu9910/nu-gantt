@@ -5,11 +5,13 @@ import {
   ContextMenuState,
   ColumnSelection,
   DragSelection,
+  MonthSelection,
 } from "../_components/gantt-chart";
 import { getTaskForCell } from "./task-utils";
 import { createNewTask } from "./task-utils";
 import { calculateDragSelection } from "./drag-utils";
 import { scrollToCell } from "./scroll-utils";
+import { toggleMonthSelection, clearColumnSelection } from "./selection-utils";
 import {
   CELL_WIDTH,
   CELL_HEIGHT,
@@ -399,17 +401,28 @@ export const createTaskFromContextHandler = (
 };
 
 /**
- * 열 클릭 이벤트 핸들러
+ * 열 클릭 이벤트 핸들러 (토글 방식)
  */
 export const createColumnClickHandler = (
   setColumnSelection: React.Dispatch<React.SetStateAction<ColumnSelection>>
 ) => {
   return (colIndex: number, e: React.MouseEvent) => {
-    console.log("Column clicked:", colIndex); // 디버깅용
-    e.stopPropagation(); // 이벤트 전파 방지
-    setColumnSelection({
-      isSelected: true,
-      selectedColumn: colIndex,
+    e.stopPropagation();
+
+    setColumnSelection((prev) => {
+      // 이미 선택된 열을 다시 클릭하면 선택 해제
+      if (prev.isSelected && prev.selectedColumn === colIndex) {
+        return {
+          isSelected: false,
+          selectedColumn: null,
+        };
+      }
+
+      // 새로운 열 선택
+      return {
+        isSelected: true,
+        selectedColumn: colIndex,
+      };
     });
   };
 };
@@ -468,5 +481,22 @@ export const createGanttMouseMoveHandler = (
         handleMouseEnter(row, col);
       }
     }
+  };
+};
+
+/**
+ * 월 클릭 이벤트 핸들러 (토글 방식)
+ */
+export const createMonthClickHandler = (
+  setMonthSelection: React.Dispatch<React.SetStateAction<MonthSelection>>,
+  setColumnSelection: React.Dispatch<React.SetStateAction<ColumnSelection>>
+) => {
+  return (monthKey: string, startIndex: number, count: number) => {
+    setMonthSelection((prev) =>
+      toggleMonthSelection(prev, monthKey, startIndex, count)
+    );
+
+    // 월 선택 시 열 선택 해제
+    setColumnSelection(clearColumnSelection());
   };
 };

@@ -1,13 +1,15 @@
 import React from "react";
 import { isColumnSelected } from "../_utils/selection-utils";
-import { ColumnSelection } from "./gantt-chart";
+import { ColumnSelection, MonthSelection } from "./gantt-chart";
 import { CELL_WIDTH, DAY_HEADER_HEIGHT } from "../_constants/gantt-constants";
 import { format } from "date-fns";
 
 interface GanttHeaderProps {
   dates: string[];
   columnSelection: ColumnSelection;
+  monthSelection: MonthSelection;
   onColumnClick: (colIndex: number, e: React.MouseEvent) => void;
+  onMonthClick: (monthKey: string, startIndex: number, count: number) => void;
 }
 
 // 월별 그룹화 함수
@@ -37,7 +39,9 @@ const groupDatesByMonth = (dates: string[]) => {
 export const GanttHeader: React.FC<GanttHeaderProps> = ({
   dates,
   columnSelection,
+  monthSelection,
   onColumnClick,
+  onMonthClick,
 }) => {
   const monthGroups = groupDatesByMonth(dates);
 
@@ -48,12 +52,23 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
         {monthGroups.map((group, groupIndex) => (
           <div
             key={`month-${groupIndex}`}
-            className="bg-gray-100 border-r border-b border-gray-300 text-sm font-bold text-center py-2"
+            className={`
+              border-r border-b border-gray-300 text-sm font-bold text-center py-2 cursor-pointer
+              ${
+                monthSelection.isSelected &&
+                monthSelection.selectedMonth === group.month
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }
+            `}
             style={{
               width: `${group.count * CELL_WIDTH}px`,
               minWidth: `${group.count * CELL_WIDTH}px`,
               maxWidth: `${group.count * CELL_WIDTH}px`,
             }}
+            onClick={() =>
+              onMonthClick(group.month, group.startIndex, group.count)
+            }
           >
             {group.month}
           </div>
@@ -66,13 +81,23 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
           const dateObj = new Date(date);
           const day = dateObj.getDate();
 
+          // 월 선택 또는 열 선택 확인
+          const isMonthSelected =
+            monthSelection.isSelected &&
+            colIndex >= monthSelection.startIndex &&
+            colIndex <= monthSelection.endIndex;
+          const isColumnSelectedSingle = isColumnSelected(
+            columnSelection,
+            colIndex
+          );
+
           return (
             <div
               key={date}
               className={`
                 border-r border-b border-gray-300 text-xs font-medium cursor-pointer flex items-center justify-center
                 ${
-                  isColumnSelected(columnSelection, colIndex)
+                  isMonthSelected || isColumnSelectedSingle
                     ? "bg-blue-500 text-white"
                     : "bg-gray-50 hover:bg-gray-200"
                 }
