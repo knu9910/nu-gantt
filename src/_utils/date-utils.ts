@@ -30,7 +30,7 @@ export const generateDates = (tasks: Task[]): string[] => {
     return dates;
   }
 
-  // 태스크가 있는 경우 기존 로직 유지
+  // 태스크가 있는 경우 태스크 범위 계산
   const allDates = tasks.flatMap((task) => [task.startDate, task.endDate]);
   const minDate = new Date(
     Math.min(...allDates.map((d) => new Date(d).getTime()))
@@ -43,10 +43,19 @@ export const generateDates = (tasks: Task[]): string[] => {
   minDate.setDate(minDate.getDate() - 7);
   maxDate.setDate(maxDate.getDate() + 7);
 
-  const dates: string[] = [];
-  const currentDate = new Date(minDate);
+  // 최소 5개월(150일) 보장
+  const today = new Date();
+  const minEndDate = new Date(today);
+  minEndDate.setDate(today.getDate() + DEFAULT_DATE_RANGE_DAYS - 1);
 
-  while (currentDate <= maxDate) {
+  // 태스크 범위가 5개월보다 작으면 오늘부터 5개월로 확장
+  const actualStartDate = minDate < today ? minDate : today;
+  const actualEndDate = maxDate > minEndDate ? maxDate : minEndDate;
+
+  const dates: string[] = [];
+  const currentDate = new Date(actualStartDate);
+
+  while (currentDate <= actualEndDate) {
     dates.push(formatDate(currentDate));
     currentDate.setDate(currentDate.getDate() + 1);
   }
