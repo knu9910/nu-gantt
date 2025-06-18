@@ -13,7 +13,6 @@ import {
   createGanttMouseMoveHandler,
   createTaskFromContextHandler,
   createColumnClickHandler,
-  createClickOutsideHandler,
 } from "../_utils/event-handlers";
 import {
   createDeleteTaskHandler,
@@ -162,39 +161,6 @@ export const GanttChart: React.FC = () => {
     ganttRef
   );
 
-  const handleMouseLeave = () => {
-    // 마우스가 간트 차트 영역을 벗어날 때 선택 해제
-    setColumnSelection({ isSelected: false, selectedColumn: null });
-    setDragSelection({ isSelected: false });
-  };
-
-  const createTaskFromContext = createTaskFromContextHandler(
-    contextMenu,
-    dragSelection,
-    dates,
-    tasks,
-    taskColors,
-    setTasks,
-    setDragSelection,
-    setContextMenu,
-    ganttRef
-  );
-
-  const handleColumnClick = createColumnClickHandler(setColumnSelection);
-
-  const handleClickOutside = createClickOutsideHandler(
-    ganttRef,
-    contextMenu,
-    setContextMenu,
-    setColumnSelection
-  );
-
-  // 태스크 삭제
-  const deleteTask = createDeleteTaskHandler(tasks, setTasks);
-
-  // 태스크 이름 업데이트
-  const updateTaskName = createUpdateTaskNameHandler(tasks, setTasks);
-
   // 태스크 클릭 핸들러
   const handleTaskClick = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -256,13 +222,31 @@ export const GanttChart: React.FC = () => {
       handleMouseUp(e);
     };
 
-    document.addEventListener("click", handleClickOutside);
     document.addEventListener("mouseup", handleDocumentMouseUp);
     return () => {
-      document.removeEventListener("click", handleClickOutside);
       document.removeEventListener("mouseup", handleDocumentMouseUp);
     };
-  }, [handleClickOutside, handleMouseUp]);
+  }, [handleMouseUp]);
+
+  const createTaskFromContext = createTaskFromContextHandler(
+    contextMenu,
+    dragSelection,
+    dates,
+    tasks,
+    taskColors,
+    setTasks,
+    setDragSelection,
+    setContextMenu,
+    ganttRef
+  );
+
+  const handleColumnClick = createColumnClickHandler(setColumnSelection);
+
+  // 태스크 삭제
+  const deleteTask = createDeleteTaskHandler(tasks, setTasks);
+
+  // 태스크 이름 업데이트
+  const updateTaskName = createUpdateTaskNameHandler(tasks, setTasks);
 
   return (
     <div className="p-4">
@@ -291,7 +275,6 @@ export const GanttChart: React.FC = () => {
         style={{ height: "600px" }}
         onMouseMove={handleGanttMouseMove}
         onMouseUp={(e) => handleMouseUp(e.nativeEvent)}
-        onMouseLeave={handleMouseLeave}
       >
         {/* 헤더 - 날짜 */}
         <GanttHeader
