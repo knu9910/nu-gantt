@@ -39,6 +39,7 @@ import {
   MonthSelection,
   TaskEditModalState,
 } from "../types/gantt-types";
+import { useHolidays } from "../hooks/use-holidays";
 
 export const GanttChart: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -86,6 +87,9 @@ export const GanttChart: React.FC = () => {
   });
 
   const ganttRef = useRef<HTMLDivElement>(null);
+
+  // 공휴일 데이터 가져오기
+  const { data: holidays = [] } = useHolidays(dates);
 
   // 행 개수 조절 함수
   const updateRowCount = (newRowCount: number) => {
@@ -307,6 +311,7 @@ export const GanttChart: React.FC = () => {
                   colIndex={colIndex}
                   dates={dates}
                   tasks={tasks}
+                  holidays={holidays}
                   dragState={dragState}
                   dragSelection={dragSelection}
                   columnSelection={columnSelection}

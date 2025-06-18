@@ -10,6 +10,7 @@ import {
   isColumnInMonthSelection,
 } from "../_utils/selection-utils";
 import { getTaskForCell } from "../_utils/task-utils";
+import { isHoliday } from "../_utils/holiday-utils";
 import {
   CELL_WIDTH,
   CELL_HEIGHT,
@@ -23,6 +24,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
   colIndex,
   dates,
   tasks,
+  holidays,
   dragState,
   dragSelection,
   columnSelection,
@@ -54,6 +56,12 @@ export const GanttCell: React.FC<GanttCellProps> = ({
 
   // 월 선택 확인
   const isMonthSelected = isColumnInMonthSelection(monthSelection, colIndex);
+
+  // 현재 날짜가 공휴일인지 확인
+  const currentDate = dates[colIndex];
+  const isCurrentDateHoliday = currentDate
+    ? isHoliday(currentDate, holidays)
+    : false;
 
   // 태스크의 시작과 끝 인덱스 계산
   const taskStartIndex = task ? dates.indexOf(task.startDate) : -1;
@@ -106,6 +114,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             ? task.color
             : taskPreview
             ? taskPreview.color
+            : isCurrentDateHoliday
+            ? "#FEE2E2"
             : isColumnSelectedCell
             ? "#DBEAFE"
             : isInDragSelection
