@@ -1,7 +1,11 @@
 import React from "react";
 import { GanttHeaderProps } from "../types/gantt-types";
 import { isColumnSelected } from "../_utils/selection-utils";
-import { CELL_WIDTH, DAY_HEADER_HEIGHT } from "../_constants/gantt-constants";
+import {
+  CELL_WIDTH,
+  DAY_HEADER_HEIGHT,
+  MONTH_HEADER_HEIGHT,
+} from "../_constants/gantt-constants";
 import { format } from "date-fns";
 
 // 월별 그룹화 함수
@@ -45,7 +49,7 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
           <div
             key={`month-${groupIndex}`}
             className={`
-              border-r border-b border-gray-300 text-sm font-bold text-center py-2 cursor-pointer
+              border-r border-b border-gray-300 text-sm font-bold text-center cursor-pointer flex items-center justify-center
               ${
                 monthSelection.isSelected &&
                 monthSelection.selectedMonth === group.month
@@ -55,6 +59,7 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
             `}
             style={{
               width: `${group.count * CELL_WIDTH}px`,
+              height: `${MONTH_HEADER_HEIGHT}px`,
               minWidth: `${group.count * CELL_WIDTH}px`,
               maxWidth: `${group.count * CELL_WIDTH}px`,
             }}

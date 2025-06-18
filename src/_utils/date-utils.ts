@@ -150,10 +150,3 @@ export const getDaysBetween = (startDate: string, endDate: string): number => {
   const timeDiff = end.getTime() - start.getTime();
   return Math.ceil(timeDiff / (1000 * 3600 * 24));
 };
-
-/**
- * 오늘 날짜를 YYYY-MM-DD 형식으로 반환
- */
-export const getTodayString = (): string => {
-  return new Date().toISOString().split("T")[0];
-};
