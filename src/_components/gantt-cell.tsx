@@ -61,6 +61,12 @@ export const GanttCell: React.FC<GanttCellProps> = ({
     dragState.isDragging && dragState.taskId === task?.id;
   const isColumnSelectedCell = isColumnSelected(columnSelection, colIndex);
 
+  // 태스크의 시작과 끝 인덱스 계산
+  const taskStartIndex = task ? dates.indexOf(task.startDate) : -1;
+  const taskEndIndex = task ? dates.indexOf(task.endDate) : -1;
+  const isTaskStart = taskStartIndex === colIndex;
+  const isTaskEnd = taskEndIndex === colIndex;
+
   return (
     <div
       key={`${rowIndex}-${colIndex}`}
@@ -96,34 +102,45 @@ export const GanttCell: React.FC<GanttCellProps> = ({
       onContextMenu={(e) => onContextMenu(rowIndex, colIndex, e)}
     >
       {task && !isDraggingThisTask && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          onClick={(e) => {
-            // 태스크 클릭 시 이름 편집 모달 열기
-            if (onTaskClick && task) {
-              e.stopPropagation(); // 셀 클릭 이벤트 방지
-              onTaskClick(task, e);
-            }
-          }}
-        >
-          <span className="text-white text-xs font-medium truncate px-1 cursor-pointer">
-            {task.name}
-          </span>
-          {/* 리사이즈 핸들 표시 */}
-          {dates.indexOf(task.startDate) === colIndex && (
-            <div className="absolute left-0 top-0 w-1 h-full bg-white bg-opacity-50 cursor-w-resize" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          {/* 태스크 이름을 시작 셀에서만 표시하되, 전체 태스크 영역에 걸쳐서 표시 */}
+          {isTaskStart && (
+            <div
+              className="absolute left-0 top-0 h-full flex items-center cursor-pointer z-10"
+              style={{
+                width: `${(taskEndIndex - taskStartIndex + 1) * 60}px`,
+              }}
+              onClick={(e) => {
+                if (onTaskClick && task) {
+                  e.stopPropagation();
+                  onTaskClick(task, e);
+                }
+              }}
+            >
+              <span className="text-white text-xs font-medium truncate px-2 w-full text-center">
+                {task.name}
+              </span>
+            </div>
           )}
-          {dates.indexOf(task.endDate) === colIndex && (
-            <div className="absolute right-0 top-0 w-1 h-full bg-white bg-opacity-50 cursor-e-resize" />
+
+          {/* 리사이즈 핸들 표시 */}
+          {isTaskStart && (
+            <div className="absolute left-0 top-0 w-1 h-full bg-white bg-opacity-50 cursor-w-resize z-20" />
+          )}
+          {isTaskEnd && (
+            <div className="absolute right-0 top-0 w-1 h-full bg-white bg-opacity-50 cursor-e-resize z-20" />
           )}
         </div>
       )}
 
       {taskPreview && (
         <div className="absolute inset-0 flex items-center justify-center border-2 border-dashed border-gray-400">
-          <span className="text-white text-xs font-medium truncate px-1">
-            {taskPreview.name}
-          </span>
+          {/* 미리보기 태스크 이름도 전체 영역에 표시 */}
+          {dragState.currentPos?.col === colIndex && (
+            <span className="text-white text-xs font-medium truncate px-1">
+              {taskPreview.name}
+            </span>
+          )}
         </div>
       )}
     </div>
