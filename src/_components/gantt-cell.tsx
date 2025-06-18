@@ -166,7 +166,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                 className="task-name"
                 style={{
                   position: "absolute",
-                  left: "8px",
+                  left: "0",
                   top: "50%",
                   transform: "translateY(-50%)",
                   color: "white",
@@ -177,10 +177,13 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
-                  maxWidth: `${Math.max(
+                  width: `${Math.max(
                     (taskEndIndex - taskStartIndex + 1) * 60 - 16,
                     0
                   )}px`,
+                  textAlign: "center",
+                  paddingLeft: "8px",
+                  paddingRight: "8px",
                 }}
               >
                 {task.name}

@@ -1,5 +1,19 @@
-import React, { useState, useEffect, useRef } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { Task } from "./gantt-chart";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogPortal,
+  DialogOverlay,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface TaskEditModalProps {
   show: boolean;
@@ -15,18 +29,12 @@ export const TaskEditModal: React.FC<TaskEditModalProps> = ({
   onCancel,
 }) => {
   const [taskName, setTaskName] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (show && task) {
+    if (task) {
       setTaskName(task.name);
-      // 모달이 열릴 때 입력 필드에 포커스
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 100);
     }
-  }, [show, task]);
+  }, [task]);
 
   const handleSave = () => {
     if (task && taskName.trim()) {
@@ -35,67 +43,68 @@ export const TaskEditModal: React.FC<TaskEditModalProps> = ({
     }
   };
 
+  const handleCancel = () => {
+    onCancel();
+    setTaskName("");
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSave();
     } else if (e.key === "Escape") {
-      onCancel();
+      handleCancel();
     }
   };
 
-  const handleCancel = () => {
-    setTaskName("");
-    onCancel();
-  };
-
-  if (!show || !task) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-30">
-      <div className="bg-white rounded-lg p-6 w-96 shadow-xl">
-        <h3 className="text-lg font-semibold mb-4">태스크 이름 변경</h3>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            태스크 이름
-          </label>
-          <input
-            ref={inputRef}
-            type="text"
-            value={taskName}
-            onChange={(e) => setTaskName(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="태스크 이름을 입력하세요"
-          />
-        </div>
-
-        <div className="flex items-center space-x-2 mb-4">
-          <div
-            className="w-4 h-4 rounded"
-            style={{ backgroundColor: task.color }}
-          />
-          <span className="text-sm text-gray-600">
-            {task.startDate} ~ {task.endDate} (행 {task.row + 1})
-          </span>
-        </div>
-
-        <div className="flex justify-end space-x-3">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!taskName.trim()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            저장
-          </button>
-        </div>
-      </div>
-    </div>
+    <Dialog open={show} onOpenChange={(open) => !open && handleCancel()}>
+      <DialogPortal>
+        <DialogOverlay className="bg-black/20 backdrop-blur-sm" />
+        <DialogContent className="sm:max-w-[425px] shadow-xl border-0 bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-900">
+              태스크 편집
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label
+                htmlFor="taskName"
+                className="text-right text-gray-700 font-medium"
+              >
+                태스크명
+              </Label>
+              <Input
+                id="taskName"
+                value={taskName}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setTaskName(e.target.value)
+                }
+                onKeyDown={handleKeyPress}
+                className="col-span-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                placeholder="태스크 이름을 입력하세요"
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={!taskName.trim()}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPortal>
+    </Dialog>
   );
 };
