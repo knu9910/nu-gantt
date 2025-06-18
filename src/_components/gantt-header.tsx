@@ -1,6 +1,7 @@
 import React from "react";
 import { GanttHeaderProps } from "../types/gantt-types";
 import { isColumnSelected } from "../_utils/selection-utils";
+import { isHoliday } from "../_utils/holiday-utils";
 import {
   CELL_WIDTH,
   DAY_HEADER_HEIGHT,
@@ -34,6 +35,7 @@ const groupDatesByMonth = (dates: string[]) => {
 
 export const GanttHeader: React.FC<GanttHeaderProps> = ({
   dates,
+  holidays,
   columnSelection,
   monthSelection,
   onColumnClick,
@@ -88,6 +90,9 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
             colIndex
           );
 
+          // 공휴일 확인
+          const isCurrentDateHoliday = isHoliday(date, holidays);
+
           return (
             <div
               key={date}
@@ -105,6 +110,11 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
                 minWidth: `${CELL_WIDTH}px`,
                 maxWidth: `${CELL_WIDTH}px`,
                 textAlign: "center",
+                color:
+                  isCurrentDateHoliday &&
+                  !(isMonthSelected || isColumnSelectedSingle)
+                    ? "#DC2626" // 공휴일이고 선택되지 않은 경우 빨간색
+                    : undefined,
               }}
               onClick={(e) => onColumnClick(colIndex, e)}
             >

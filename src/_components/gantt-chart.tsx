@@ -293,6 +293,7 @@ export const GanttChart: React.FC = () => {
         {/* 헤더 - 날짜 */}
         <GanttHeader
           dates={dates}
+          holidays={holidays}
           columnSelection={columnSelection}
           monthSelection={monthSelection}
           onColumnClick={handleColumnClickWithMonthClear}

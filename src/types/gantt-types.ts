@@ -136,6 +136,7 @@ export type GanttCellProps = {
  */
 export type GanttHeaderProps = {
   dates: string[];
+  holidays: Holiday[];
   columnSelection: ColumnSelection;
   monthSelection: MonthSelection;
   onColumnClick: (colIndex: number, e: React.MouseEvent) => void;
