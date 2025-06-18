@@ -1,28 +1,50 @@
 import { Task } from "../_components/gantt-chart";
+import { DEFAULT_DATE_RANGE_DAYS } from "../_constants/gantt-constants";
 
 // ==========================================
 // 날짜 관련 유틸리티 함수들
 // ==========================================
 
 /**
- * 태스크 기준으로 동적 날짜 범위 생성
- * - 태스크가 없으면: 현재 날짜부터 5달
- * - 태스크가 있으면: 최소 한 달, 태스크 범위가 한 달보다 크면 태스크 1주일 전후까지
+ * 날짜를 YYYY-MM-DD 형식으로 변환
+ */
+export const formatDate = (date: Date): string => {
+  return date.toISOString().split("T")[0];
+};
+
+/**
+ * 날짜를 한국어 형식으로 변환 (예: "12월 25일 (월)")
+ */
+export const formatDateToKorean = (date: string): string => {
+  const dateObj = new Date(date);
+  const month = dateObj.getMonth() + 1;
+  const day = dateObj.getDate();
+  const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
+    dateObj.getDay()
+  ];
+
+  return `${month}월 ${day}일 (${dayOfWeek})`;
+};
+
+/**
+ * 태스크들의 날짜 범위를 기반으로 간트 차트에 표시할 날짜 배열 생성
  */
 export const generateDates = (tasks: Task[]): string[] => {
   if (tasks.length === 0) {
-    // 태스크가 없으면 현재 날짜부터 5달
-    const dates = [];
+    // 태스크가 없는 경우 현재 날짜부터 5개월(150일) 생성
+    const dates: string[] = [];
     const today = new Date();
-    for (let i = 0; i < 150; i++) {
+
+    for (let i = 0; i < DEFAULT_DATE_RANGE_DAYS; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-      dates.push(date.toISOString().split("T")[0]);
+      dates.push(formatDate(date));
     }
+
     return dates;
   }
 
-  // 태스크가 있는 경우
+  // 태스크가 있는 경우 기존 로직 유지
   const allDates = tasks.flatMap((task) => [task.startDate, task.endDate]);
   const minDate = new Date(
     Math.min(...allDates.map((d) => new Date(d).getTime()))
@@ -31,57 +53,19 @@ export const generateDates = (tasks: Task[]): string[] => {
     Math.max(...allDates.map((d) => new Date(d).getTime()))
   );
 
-  // 태스크 범위에 1주일 전후 추가
-  const taskStartWithMargin = new Date(minDate);
-  taskStartWithMargin.setDate(minDate.getDate() - 7);
-  const taskEndWithMargin = new Date(maxDate);
-  taskEndWithMargin.setDate(maxDate.getDate() + 7);
+  // 시작일을 일주일 앞당기고, 종료일을 일주일 뒤로 연장
+  minDate.setDate(minDate.getDate() - 7);
+  maxDate.setDate(maxDate.getDate() + 7);
 
-  // 태스크 범위 계산 (1주일 전후 포함)
-  const taskRangeDays = Math.ceil(
-    (taskEndWithMargin.getTime() - taskStartWithMargin.getTime()) /
-      (1000 * 3600 * 24)
-  );
+  const dates: string[] = [];
+  const currentDate = new Date(minDate);
 
-  let finalStartDate: Date;
-  let finalEndDate: Date;
-
-  if (taskRangeDays < 30) {
-    // 태스크 범위가 30일보다 작으면 한 달 표시
-    // 태스크 범위의 중간점을 기준으로 앞뒤 15일씩
-    const taskCenterTime =
-      (taskStartWithMargin.getTime() + taskEndWithMargin.getTime()) / 2;
-    const centerDate = new Date(taskCenterTime);
-
-    finalStartDate = new Date(centerDate);
-    finalStartDate.setDate(centerDate.getDate() - 15);
-    finalEndDate = new Date(centerDate);
-    finalEndDate.setDate(centerDate.getDate() + 15);
-  } else {
-    // 태스크 범위가 30일 이상이면 태스크 1주일 전후 사용
-    finalStartDate = taskStartWithMargin;
-    finalEndDate = taskEndWithMargin;
-  }
-
-  // 날짜 배열 생성
-  const dates = [];
-  const currentDate = new Date(finalStartDate);
-  while (currentDate <= finalEndDate) {
-    dates.push(currentDate.toISOString().split("T")[0]);
+  while (currentDate <= maxDate) {
+    dates.push(formatDate(currentDate));
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
   return dates;
-};
-
-/**
- * 날짜 문자열을 한국어 형식으로 포맷팅
- */
-export const formatDateToKorean = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("ko-KR", {
-    month: "short",
-    day: "numeric",
-  });
 };
 
 /**

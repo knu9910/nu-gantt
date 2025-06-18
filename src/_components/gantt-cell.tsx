@@ -7,6 +7,13 @@ import {
 } from "../_utils/drag-utils";
 import { isColumnSelected } from "../_utils/selection-utils";
 import { getTaskForCell } from "../_utils/task-utils";
+import {
+  CELL_WIDTH,
+  CELL_HEIGHT,
+  RESIZE_HANDLE_WIDTH,
+  TASK_NAME_PADDING,
+  TASK_BORDER_OFFSET,
+} from "../_constants/gantt-constants";
 
 interface GanttCellProps {
   rowIndex: number;
@@ -91,7 +98,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
     <div
       key={`${rowIndex}-${colIndex}`}
       className={`
-        min-w-[60px] h-10 border-r border-b border-gray-200 relative cursor-pointer
+        border-r border-b border-gray-200 relative cursor-pointer
         ${
           isInDragArea
             ? "bg-blue-200"
@@ -105,6 +112,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
         ${taskPreview ? "bg-opacity-50" : ""}
       `}
       style={{
+        width: `${CELL_WIDTH}px`,
+        height: `${CELL_HEIGHT}px`,
         backgroundColor:
           task && !isDraggingThisTask
             ? task.color
@@ -133,15 +142,14 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             <div
               className="absolute left-0 top-0 h-full flex items-center cursor-pointer z-10"
               style={{
-                width: `${(taskEndIndex - taskStartIndex + 1) * 60}px`,
+                width: `${(taskEndIndex - taskStartIndex + 1) * CELL_WIDTH}px`,
               }}
               onMouseDown={(e) => {
                 // 태스크 이름 영역 클릭 시 실제 클릭한 셀 위치 계산
                 e.stopPropagation();
                 const rect = e.currentTarget.getBoundingClientRect();
                 const clickX = e.clientX - rect.left;
-                const cellWidth = 60;
-                const clickedCellOffset = Math.floor(clickX / cellWidth);
+                const clickedCellOffset = Math.floor(clickX / CELL_WIDTH);
                 const actualClickedCol = taskStartIndex + clickedCellOffset;
 
                 console.log("Task name area clicked:", {
@@ -178,12 +186,13 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   width: `${Math.max(
-                    (taskEndIndex - taskStartIndex + 1) * 60 - 16,
+                    (taskEndIndex - taskStartIndex + 1) * CELL_WIDTH -
+                      TASK_BORDER_OFFSET,
                     0
                   )}px`,
                   textAlign: "center",
-                  paddingLeft: "8px",
-                  paddingRight: "8px",
+                  paddingLeft: `${TASK_NAME_PADDING}px`,
+                  paddingRight: `${TASK_NAME_PADDING}px`,
                 }}
               >
                 {task.name}
@@ -194,7 +203,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
           {/* 시작 셀의 왼쪽 끝에 리사이즈 핸들 */}
           {isTaskStart && taskStartIndex !== taskEndIndex && (
             <div
-              className="absolute left-0 top-0 w-2 h-full cursor-w-resize z-30 hover:bg-white hover:bg-opacity-20"
+              className="absolute left-0 top-0 h-full cursor-w-resize z-30 hover:bg-white hover:bg-opacity-20"
+              style={{ width: `${RESIZE_HANDLE_WIDTH}px` }}
               onMouseDown={(e) => handleResizeMouseDown(e, "start")}
               title="크기 조절"
             />
@@ -203,7 +213,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
           {/* 끝 셀의 오른쪽 끝에 리사이즈 핸들 */}
           {isTaskEnd && taskStartIndex !== taskEndIndex && (
             <div
-              className="absolute right-0 top-0 w-2 h-full cursor-e-resize z-30 hover:bg-white hover:bg-opacity-20"
+              className="absolute right-0 top-0 h-full cursor-e-resize z-30 hover:bg-white hover:bg-opacity-20"
+              style={{ width: `${RESIZE_HANDLE_WIDTH}px` }}
               onMouseDown={(e) => handleResizeMouseDown(e, "end")}
               title="크기 조절"
             />
@@ -253,7 +264,9 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                 <div
                   className="absolute left-0 top-0 h-full flex items-center z-10"
                   style={{
-                    width: `${(previewEndCol - previewStartCol + 1) * 60}px`,
+                    width: `${
+                      (previewEndCol - previewStartCol + 1) * CELL_WIDTH
+                    }px`,
                   }}
                 >
                   <span className="text-white text-xs font-medium truncate px-2 w-full text-center">

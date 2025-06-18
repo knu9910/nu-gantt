@@ -9,7 +9,15 @@ import {
 import { getTaskForCell } from "./task-utils";
 import { createNewTask } from "./task-utils";
 import { calculateDragSelection } from "./drag-utils";
-import { scrollToTask } from "./scroll-utils";
+import { scrollToCell } from "./scroll-utils";
+import {
+  CELL_WIDTH,
+  CELL_HEIGHT,
+  HEADER_HEIGHT,
+  CLICK_THRESHOLD_TIME,
+  CLICK_THRESHOLD_DISTANCE,
+  SCROLL_DELAY,
+} from "../_constants/gantt-constants";
 
 // ==========================================
 // 이벤트 핸들러 유틸리티 함수들
@@ -148,8 +156,10 @@ export const createMouseUpHandler = (
           Math.pow(e.clientY - startMousePos.y, 2)
       );
 
-      // 300ms 이내이고 5px 이내 움직임이면 클릭으로 판단
-      return timeDiff < 300 && mouseDiff < 5;
+      // 상수를 사용하여 클릭 판단
+      return (
+        timeDiff < CLICK_THRESHOLD_TIME && mouseDiff < CLICK_THRESHOLD_DISTANCE
+      );
     };
 
     // 태스크 클릭 처리
@@ -213,14 +223,8 @@ export const createMouseUpHandler = (
           // 태스크 이동 후 스크롤
           if (ganttRef) {
             setTimeout(() => {
-              scrollToTask(
-                ganttRef,
-                currentPos.row,
-                newStartCol,
-                newEndCol,
-                true
-              );
-            }, 100);
+              scrollToCell(ganttRef, currentPos.row, newStartCol);
+            }, SCROLL_DELAY);
           }
         }
       }
@@ -252,14 +256,8 @@ export const createMouseUpHandler = (
           // 태스크 리사이즈 후 스크롤
           if (ganttRef) {
             setTimeout(() => {
-              scrollToTask(
-                ganttRef,
-                task.row,
-                newStartCol,
-                originalEndCol,
-                true
-              );
-            }, 100);
+              scrollToCell(ganttRef, task.row, newStartCol);
+            }, SCROLL_DELAY);
           }
         }
       }
@@ -291,14 +289,8 @@ export const createMouseUpHandler = (
           // 태스크 리사이즈 후 스크롤
           if (ganttRef) {
             setTimeout(() => {
-              scrollToTask(
-                ganttRef,
-                task.row,
-                originalStartCol,
-                newEndCol,
-                true
-              );
-            }, 100);
+              scrollToCell(ganttRef, task.row, originalStartCol);
+            }, SCROLL_DELAY);
           }
         }
       }
@@ -367,14 +359,12 @@ export const createTaskFromContextHandler = (
       // 태스크 생성 후 해당 위치로 스크롤
       if (ganttRef && dragSelection.startPos && dragSelection.endPos) {
         setTimeout(() => {
-          scrollToTask(
+          scrollToCell(
             ganttRef,
             dragSelection.startPos!.row,
-            dragSelection.startPos!.col,
-            dragSelection.endPos!.col,
-            true
+            dragSelection.startPos!.col
           );
-        }, 100);
+        }, SCROLL_DELAY);
       }
 
       // 드래그 선택 영역 초기화
@@ -394,14 +384,8 @@ export const createTaskFromContextHandler = (
       // 단일 태스크 생성 후 스크롤
       if (ganttRef) {
         setTimeout(() => {
-          scrollToTask(
-            ganttRef,
-            contextMenu.row,
-            contextMenu.col,
-            contextMenu.col + 2,
-            true
-          );
-        }, 100);
+          scrollToCell(ganttRef, contextMenu.row, contextMenu.col);
+        }, SCROLL_DELAY);
       }
     }
     setContextMenu({ ...contextMenu, show: false });
@@ -462,19 +446,16 @@ export const createGanttMouseMoveHandler = (
   return (e: React.MouseEvent) => {
     if (dragState.isDragging && ganttRef.current) {
       const rect = ganttRef.current.getBoundingClientRect();
-      const headerHeight = 40; // 헤더 높이
-      const cellWidth = 60;
-      const cellHeight = 40;
 
       // 스크롤 오프셋 고려
       const scrollLeft = ganttRef.current.scrollLeft;
       const scrollTop = ganttRef.current.scrollTop;
 
       const x = e.clientX - rect.left + scrollLeft;
-      const y = e.clientY - rect.top - headerHeight + scrollTop;
+      const y = e.clientY - rect.top - HEADER_HEIGHT + scrollTop;
 
-      const col = Math.floor(x / cellWidth);
-      const row = Math.floor(y / cellHeight);
+      const col = Math.floor(x / CELL_WIDTH);
+      const row = Math.floor(y / CELL_HEIGHT);
 
       // 유효한 범위 내에서만 처리
       if (

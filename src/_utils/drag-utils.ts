@@ -1,4 +1,9 @@
 import { Task, DragState, DragSelection } from "../_components/gantt-chart";
+import {
+  CELL_WIDTH,
+  CELL_HEIGHT,
+  HEADER_HEIGHT,
+} from "../_constants/gantt-constants";
 
 // ==========================================
 // 드래그 영역 관련 유틸리티 함수들
@@ -158,19 +163,16 @@ export const createGanttMouseMoveHandler = (
   return (e: React.MouseEvent) => {
     if (dragState.isDragging && ganttRef.current) {
       const rect = ganttRef.current.getBoundingClientRect();
-      const headerHeight = 40; // 헤더 높이
-      const cellWidth = 60;
-      const cellHeight = 40;
 
       // 스크롤 오프셋 고려
       const scrollLeft = ganttRef.current.scrollLeft;
       const scrollTop = ganttRef.current.scrollTop;
 
       const x = e.clientX - rect.left + scrollLeft;
-      const y = e.clientY - rect.top - headerHeight + scrollTop;
+      const y = e.clientY - rect.top - HEADER_HEIGHT + scrollTop;
 
-      const col = Math.floor(x / cellWidth);
-      let row = Math.floor(y / cellHeight);
+      const col = Math.floor(x / CELL_WIDTH);
+      let row = Math.floor(y / CELL_HEIGHT);
 
       // resize 중일 때는 행 이동을 막고 원래 행에서만 작업
       if (

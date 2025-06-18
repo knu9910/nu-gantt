@@ -2,46 +2,34 @@
  * 태스크 위치로 스크롤하는 유틸리티 함수들
  */
 
+import { Task } from "../_components/gantt-chart";
+import {
+  CELL_WIDTH,
+  CELL_HEIGHT,
+  SCROLL_DELAY,
+} from "../_constants/gantt-constants";
+
 /**
  * 특정 태스크 위치로 스크롤
  */
 export const scrollToTask = (
   ganttRef: React.RefObject<HTMLDivElement | null>,
-  taskRow: number,
-  taskStartCol: number,
-  taskEndCol: number,
-  animated: boolean = true
+  task: Task,
+  dates: string[]
 ) => {
   if (!ganttRef.current) return;
 
-  const container = ganttRef.current;
-  const cellWidth = 60;
-  const cellHeight = 40;
-  const headerHeight = 40;
+  const startDateIndex = dates.indexOf(task.startDate);
+  if (startDateIndex === -1) return;
 
-  // 태스크의 중심 위치 계산
-  const taskCenterCol = Math.floor((taskStartCol + taskEndCol) / 2);
-  const taskCenterX = taskCenterCol * cellWidth;
-  const taskCenterY = taskRow * cellHeight + headerHeight;
+  const scrollLeft = startDateIndex * CELL_WIDTH;
 
-  // 컨테이너의 보이는 영역 크기
-  const containerWidth = container.clientWidth;
-  const containerHeight = container.clientHeight;
-
-  // 스크롤할 위치 계산 (태스크가 중앙에 오도록)
-  const scrollLeft = Math.max(0, taskCenterX - containerWidth / 2);
-  const scrollTop = Math.max(0, taskCenterY - containerHeight / 2);
-
-  if (animated) {
-    container.scrollTo({
+  setTimeout(() => {
+    ganttRef.current?.scrollTo({
       left: scrollLeft,
-      top: scrollTop,
       behavior: "smooth",
     });
-  } else {
-    container.scrollLeft = scrollLeft;
-    container.scrollTop = scrollTop;
-  }
+  }, SCROLL_DELAY);
 };
 
 /**
@@ -49,52 +37,21 @@ export const scrollToTask = (
  */
 export const scrollToCell = (
   ganttRef: React.RefObject<HTMLDivElement | null>,
-  row: number,
-  col: number,
-  animated: boolean = true
+  rowIndex: number,
+  colIndex: number
 ) => {
   if (!ganttRef.current) return;
 
-  const container = ganttRef.current;
-  const cellWidth = 60;
-  const cellHeight = 40;
-  const headerHeight = 40;
+  const scrollTop = rowIndex * CELL_HEIGHT;
+  const scrollLeft = colIndex * CELL_WIDTH;
 
-  // 셀의 위치 계산
-  const cellX = col * cellWidth;
-  const cellY = row * cellHeight + headerHeight;
-
-  // 컨테이너의 보이는 영역 크기
-  const containerWidth = container.clientWidth;
-  const containerHeight = container.clientHeight;
-
-  // 현재 스크롤 위치
-  const currentScrollLeft = container.scrollLeft;
-  const currentScrollTop = container.scrollTop;
-
-  // 셀이 보이는 영역에 있는지 확인
-  const isVisible =
-    cellX >= currentScrollLeft &&
-    cellX + cellWidth <= currentScrollLeft + containerWidth &&
-    cellY >= currentScrollTop &&
-    cellY + cellHeight <= currentScrollTop + containerHeight;
-
-  // 보이지 않는 경우에만 스크롤
-  if (!isVisible) {
-    const scrollLeft = Math.max(0, cellX - containerWidth / 2);
-    const scrollTop = Math.max(0, cellY - containerHeight / 2);
-
-    if (animated) {
-      container.scrollTo({
-        left: scrollLeft,
-        top: scrollTop,
-        behavior: "smooth",
-      });
-    } else {
-      container.scrollLeft = scrollLeft;
-      container.scrollTop = scrollTop;
-    }
-  }
+  setTimeout(() => {
+    ganttRef.current?.scrollTo({
+      left: scrollLeft,
+      top: scrollTop,
+      behavior: "smooth",
+    });
+  }, SCROLL_DELAY);
 };
 
 /**
@@ -105,8 +62,7 @@ export const scrollToDragArea = (
   startRow: number,
   startCol: number,
   endRow: number,
-  endCol: number,
-  animated: boolean = true
+  endCol: number
 ) => {
   if (!ganttRef.current) return;
 
@@ -114,5 +70,5 @@ export const scrollToDragArea = (
   const centerRow = Math.floor((startRow + endRow) / 2);
   const centerCol = Math.floor((startCol + endCol) / 2);
 
-  scrollToCell(ganttRef, centerRow, centerCol, animated);
+  scrollToCell(ganttRef, centerRow, centerCol);
 };

@@ -1,6 +1,7 @@
 import React from "react";
 import { isColumnSelected } from "../_utils/selection-utils";
 import { ColumnSelection } from "./gantt-chart";
+import { CELL_WIDTH, DAY_HEADER_HEIGHT } from "../_constants/gantt-constants";
 
 interface GanttHeaderProps {
   dates: string[];
@@ -47,7 +48,7 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
           <div
             key={`month-${groupIndex}`}
             className="bg-gray-100 border-r border-b border-gray-300 text-sm font-bold text-center py-2"
-            style={{ width: `${group.count * 60}px` }}
+            style={{ width: `${group.count * CELL_WIDTH}px` }}
           >
             {group.month}
           </div>
@@ -64,13 +65,20 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
             <div
               key={date}
               className={`
-                min-w-[60px] h-10 p-2 border-r border-b border-gray-300 text-xs font-medium text-center cursor-pointer flex items-center justify-center
+                border-r border-b border-gray-300 text-xs font-medium cursor-pointer flex items-center justify-center
                 ${
                   isColumnSelected(columnSelection, colIndex)
                     ? "bg-blue-500 text-white"
                     : "bg-gray-50 hover:bg-gray-200"
                 }
               `}
+              style={{
+                width: `${CELL_WIDTH}px`,
+                height: `${DAY_HEADER_HEIGHT}px`,
+                minWidth: `${CELL_WIDTH}px`,
+                maxWidth: `${CELL_WIDTH}px`,
+                textAlign: "center",
+              }}
               onClick={(e) => onColumnClick(colIndex, e)}
             >
               {day}
