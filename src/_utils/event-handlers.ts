@@ -7,7 +7,7 @@ import {
   DragSelection,
 } from "../_components/gantt-chart";
 import { getTaskForCell } from "./task-utils";
-import { createNewTask } from "./task-crud-utils";
+import { createNewTask } from "./task-utils";
 import { calculateDragSelection } from "./drag-utils";
 
 // ==========================================

@@ -14,13 +14,17 @@ import {
   createColumnClickHandler,
   createClickOutsideHandler,
 } from "../_utils/event-handlers";
-import { createDeleteTaskHandler } from "../_utils/component-utils";
+import {
+  createDeleteTaskHandler,
+  createUpdateTaskNameHandler,
+} from "../_utils/task-utils";
 
 // Component imports
 import { ContextMenu } from "./context-menu";
 import { TaskList } from "./task-list";
 import { GanttHeader } from "./gantt-header";
 import { GanttCell } from "./gantt-cell";
+import { TaskEditModal } from "./task-edit-modal";
 
 export interface Task {
   id: string;
@@ -92,6 +96,15 @@ export const GanttChart: React.FC = () => {
     isSelected: false,
   });
 
+  // 태스크 편집 모달 상태 추가
+  const [editModal, setEditModal] = useState<{
+    show: boolean;
+    task: Task | null;
+  }>({
+    show: false,
+    task: null,
+  });
+
   const ganttRef = useRef<HTMLDivElement>(null);
 
   // 이벤트 핸들러들 생성
@@ -143,6 +156,26 @@ export const GanttChart: React.FC = () => {
   // 태스크 삭제
   const deleteTask = createDeleteTaskHandler(tasks, setTasks);
 
+  // 태스크 이름 업데이트
+  const updateTaskName = createUpdateTaskNameHandler(tasks, setTasks);
+
+  // 태스크 클릭 핸들러
+  const handleTaskClick = (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditModal({ show: true, task });
+  };
+
+  // 태스크 편집 모달 저장 핸들러
+  const handleSaveTaskName = (taskId: string, newName: string) => {
+    updateTaskName(taskId, newName);
+    setEditModal({ show: false, task: null });
+  };
+
+  // 태스크 편집 모달 취소 핸들러
+  const handleCancelTaskEdit = () => {
+    setEditModal({ show: false, task: null });
+  };
+
   // 태스크가 변경될 때마다 날짜 범위 업데이트 (드래그 중이 아닐 때만)
   useEffect(() => {
     if (!dragState.isDragging) {
@@ -168,6 +201,7 @@ export const GanttChart: React.FC = () => {
           <p>• 태스크를 드래그하여 이동하거나 크기를 조절하세요</p>
           <p>• 태스크 시작/끝 부분을 드래그하면 크기가 조절됩니다</p>
           <p>• 빈 셀에서 우클릭으로 단일 태스크를 생성할 수도 있습니다</p>
+          <p>• 태스크를 클릭하면 이름을 변경할 수 있습니다</p>
         </div>
       </div>
 
@@ -201,6 +235,7 @@ export const GanttChart: React.FC = () => {
                   onMouseDown={handleMouseDown}
                   onMouseEnter={handleMouseEnter}
                   onContextMenu={handleRightClick}
+                  onTaskClick={handleTaskClick}
                 />
               ))}
             </div>
@@ -214,6 +249,14 @@ export const GanttChart: React.FC = () => {
         x={contextMenu.x}
         y={contextMenu.y}
         onCreateTask={createTaskFromContext}
+      />
+
+      {/* 태스크 편집 모달 */}
+      <TaskEditModal
+        show={editModal.show}
+        task={editModal.task}
+        onSave={handleSaveTaskName}
+        onCancel={handleCancelTaskEdit}
       />
 
       {/* 태스크 목록 */}

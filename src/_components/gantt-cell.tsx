@@ -27,6 +27,7 @@ interface GanttCellProps {
     colIndex: number,
     e: React.MouseEvent
   ) => void;
+  onTaskClick?: (task: Task, e: React.MouseEvent) => void;
 }
 
 export const GanttCell: React.FC<GanttCellProps> = ({
@@ -40,6 +41,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
   onMouseDown,
   onMouseEnter,
   onContextMenu,
+  onTaskClick,
 }) => {
   const task = getTaskForCell(rowIndex, colIndex, tasks, dates);
   const taskPreview = getTaskPreview(
@@ -94,8 +96,17 @@ export const GanttCell: React.FC<GanttCellProps> = ({
       onContextMenu={(e) => onContextMenu(rowIndex, colIndex, e)}
     >
       {task && !isDraggingThisTask && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-white text-xs font-medium truncate px-1">
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          onClick={(e) => {
+            // 태스크 클릭 시 이름 편집 모달 열기
+            if (onTaskClick && task) {
+              e.stopPropagation(); // 셀 클릭 이벤트 방지
+              onTaskClick(task, e);
+            }
+          }}
+        >
+          <span className="text-white text-xs font-medium truncate px-1 cursor-pointer">
             {task.name}
           </span>
           {/* 리사이즈 핸들 표시 */}
