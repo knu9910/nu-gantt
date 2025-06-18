@@ -74,9 +74,10 @@ export const getTaskPreview = (
     const originalEndCol = dates.indexOf(originalTask.endDate);
 
     if (dragType === "move") {
-      // 이동 프리뷰
+      // 이동 프리뷰 - 클릭 오프셋 고려
       const taskDuration = originalEndCol - originalStartCol;
-      const previewStartCol = currentPos.col;
+      const clickOffset = dragState.clickOffset || 0;
+      const previewStartCol = currentPos.col - clickOffset;
       const previewEndCol = previewStartCol + taskDuration;
 
       if (col >= previewStartCol && col <= previewEndCol) {
@@ -138,5 +139,45 @@ export const calculateDragSelection = (
     isSelected: true,
     startPos: { row: startPos.row, col: startCol },
     endPos: { row: startPos.row, col: endCol },
+  };
+};
+
+/**
+ * 간트 차트 전체 영역에서의 마우스 무브 이벤트 핸들러 생성
+ */
+export const createGanttMouseMoveHandler = (
+  dragState: DragState,
+  ganttRef: React.RefObject<HTMLDivElement | null>,
+  dates: string[],
+  taskNames: string[],
+  handleMouseEnter: (row: number, col: number) => void
+) => {
+  return (e: React.MouseEvent) => {
+    if (dragState.isDragging && ganttRef.current) {
+      const rect = ganttRef.current.getBoundingClientRect();
+      const headerHeight = 40; // 헤더 높이
+      const cellWidth = 60;
+      const cellHeight = 40;
+
+      // 스크롤 오프셋 고려
+      const scrollLeft = ganttRef.current.scrollLeft;
+      const scrollTop = ganttRef.current.scrollTop;
+
+      const x = e.clientX - rect.left + scrollLeft;
+      const y = e.clientY - rect.top - headerHeight + scrollTop;
+
+      const col = Math.floor(x / cellWidth);
+      const row = Math.floor(y / cellHeight);
+
+      // 유효한 범위 내에서만 처리
+      if (
+        col >= 0 &&
+        col < dates.length &&
+        row >= 0 &&
+        row < taskNames.length
+      ) {
+        handleMouseEnter(row, col);
+      }
+    }
   };
 };

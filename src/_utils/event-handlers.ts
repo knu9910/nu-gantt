@@ -30,12 +30,24 @@ export const createMouseDownHandler = (
 
       if (existingTask) {
         // 태스크 영역 클릭 - 이동 모드
+        // 클릭한 위치와 태스크 시작점 사이의 오프셋 계산
+        const taskStartCol = dates.indexOf(existingTask.startDate);
+        const clickOffset = col - taskStartCol;
+
+        console.log("Task clicked:", {
+          taskName: existingTask.name,
+          clickedCol: col,
+          taskStartCol: taskStartCol,
+          clickOffset: clickOffset,
+        });
+
         setDragState({
           isDragging: true,
           dragType: "move",
           taskId: existingTask.id,
           startPos: { row, col },
           currentPos: { row, col },
+          clickOffset: clickOffset, // 클릭 오프셋 저장
         });
       } else {
         // 빈 셀 클릭 - 새 태스크 생성 모드
@@ -65,6 +77,25 @@ export const createMouseEnterHandler = (
 ) => {
   return (row: number, col: number) => {
     if (dragState.isDragging) {
+      // 현재 위치와 동일하면 업데이트하지 않음
+      if (
+        dragState.currentPos?.row === row &&
+        dragState.currentPos?.col === col
+      ) {
+        return;
+      }
+
+      if (
+        dragState.dragType === "move" &&
+        dragState.clickOffset !== undefined
+      ) {
+        console.log("Dragging move:", {
+          currentCol: col,
+          clickOffset: dragState.clickOffset,
+          previewStartCol: col - dragState.clickOffset,
+        });
+      }
+
       setDragState({
         ...dragState,
         currentPos: { row, col },
@@ -90,7 +121,7 @@ export const createMouseUpHandler = (
       return;
     }
 
-    const { dragType, taskId, startPos, currentPos } = dragState;
+    const { dragType, taskId, startPos, currentPos, clickOffset } = dragState;
 
     if (dragType === "new") {
       // 새 태스크 생성 - 바로 생성하지 않고 드래그 선택 영역으로 저장
@@ -107,11 +138,19 @@ export const createMouseUpHandler = (
       if (task) {
         const taskDuration =
           dates.indexOf(task.endDate) - dates.indexOf(task.startDate);
-        const newStartCol = currentPos.col;
-        const newEndCol = Math.min(
-          newStartCol + taskDuration,
-          dates.length - 1
-        );
+
+        // 클릭 오프셋을 사용하여 새로운 시작점 계산
+        const newStartCol = currentPos.col - (clickOffset || 0);
+        const newEndCol = newStartCol + taskDuration;
+
+        console.log("Moving task:", {
+          taskName: task.name,
+          currentPosCol: currentPos.col,
+          clickOffset: clickOffset,
+          newStartCol: newStartCol,
+          newEndCol: newEndCol,
+          taskDuration: taskDuration,
+        });
 
         // 배열 경계 검사
         if (
@@ -300,6 +339,46 @@ export const createClickOutsideHandler = (
         isSelected: false,
         selectedColumn: null,
       });
+    }
+  };
+};
+
+/**
+ * 간트 차트 전체 영역 마우스 무브 핸들러 (드래그 중)
+ */
+export const createGanttMouseMoveHandler = (
+  dragState: DragState,
+  dates: string[],
+  taskNames: string[],
+  ganttRef: React.RefObject<HTMLDivElement | null>,
+  handleMouseEnter: (row: number, col: number) => void
+) => {
+  return (e: React.MouseEvent) => {
+    if (dragState.isDragging && ganttRef.current) {
+      const rect = ganttRef.current.getBoundingClientRect();
+      const headerHeight = 40; // 헤더 높이
+      const cellWidth = 60;
+      const cellHeight = 40;
+
+      // 스크롤 오프셋 고려
+      const scrollLeft = ganttRef.current.scrollLeft;
+      const scrollTop = ganttRef.current.scrollTop;
+
+      const x = e.clientX - rect.left + scrollLeft;
+      const y = e.clientY - rect.top - headerHeight + scrollTop;
+
+      const col = Math.floor(x / cellWidth);
+      const row = Math.floor(y / cellHeight);
+
+      // 유효한 범위 내에서만 처리
+      if (
+        col >= 0 &&
+        col < dates.length &&
+        row >= 0 &&
+        row < taskNames.length
+      ) {
+        handleMouseEnter(row, col);
+      }
     }
   };
 };

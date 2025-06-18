@@ -18,6 +18,7 @@ import {
   createDeleteTaskHandler,
   createUpdateTaskNameHandler,
 } from "../_utils/task-utils";
+import { createGanttMouseMoveHandler } from "../_utils/drag-utils";
 
 // Component imports
 import { ContextMenu } from "./context-menu";
@@ -49,6 +50,7 @@ export interface DragState {
   taskId?: string;
   startPos?: { row: number; col: number };
   currentPos?: { row: number; col: number };
+  clickOffset?: number;
 }
 
 // 드래그 선택 영역 상태 추가
@@ -159,6 +161,15 @@ export const GanttChart: React.FC = () => {
   // 태스크 이름 업데이트
   const updateTaskName = createUpdateTaskNameHandler(tasks, setTasks);
 
+  // 간트 차트 전체 영역에서의 마우스 무브 이벤트 핸들러
+  const handleGanttMouseMove = createGanttMouseMoveHandler(
+    dragState,
+    ganttRef,
+    dates,
+    taskNames,
+    handleMouseEnter
+  );
+
   // 태스크 클릭 핸들러
   const handleTaskClick = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -188,6 +199,7 @@ export const GanttChart: React.FC = () => {
       taskId,
       startPos: { row: rowIndex, col: colIndex },
       currentPos: { row: rowIndex, col: colIndex },
+      clickOffset: 0,
     });
   };
 
@@ -203,6 +215,7 @@ export const GanttChart: React.FC = () => {
       taskId,
       startPos: { row: rowIndex, col: colIndex },
       currentPos: { row: rowIndex, col: colIndex },
+      clickOffset: 0,
     });
   };
 
@@ -239,6 +252,7 @@ export const GanttChart: React.FC = () => {
         ref={ganttRef}
         className="border border-gray-300 rounded-lg overflow-auto shadow-lg select-none"
         style={{ maxHeight: "600px" }}
+        onMouseMove={handleGanttMouseMove}
       >
         {/* 헤더 - 날짜 */}
         <GanttHeader

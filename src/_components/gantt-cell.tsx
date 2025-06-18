@@ -103,7 +103,6 @@ export const GanttCell: React.FC<GanttCellProps> = ({
         }
         ${task && !isDraggingThisTask ? "bg-opacity-80 cursor-move" : ""}
         ${taskPreview ? "bg-opacity-50" : ""}
-        ${isDraggingThisTask ? "opacity-50" : ""}
       `}
       style={{
         backgroundColor:
@@ -118,9 +117,15 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             : undefined,
       }}
       onMouseDown={(e) => onMouseDown(rowIndex, colIndex, e)}
-      onMouseEnter={() => onMouseEnter(rowIndex, colIndex)}
+      onMouseEnter={() => {
+        // 드래그 중이 아닐 때만 개별 셀 이벤트 처리
+        if (!dragState.isDragging) {
+          onMouseEnter(rowIndex, colIndex);
+        }
+      }}
       onContextMenu={(e) => onContextMenu(rowIndex, colIndex, e)}
     >
+      {/* 드래그 중이 아닐 때만 원본 태스크 표시 */}
       {task && !isDraggingThisTask && (
         <div className="absolute inset-0 flex items-center justify-center">
           {/* 태스크 이름을 시작 셀에서만 표시하되, 전체 태스크 영역에 걸쳐서 표시 */}
@@ -129,6 +134,26 @@ export const GanttCell: React.FC<GanttCellProps> = ({
               className="absolute left-0 top-0 h-full flex items-center cursor-pointer z-10"
               style={{
                 width: `${(taskEndIndex - taskStartIndex + 1) * 60}px`,
+              }}
+              onMouseDown={(e) => {
+                // 태스크 이름 영역 클릭 시 실제 클릭한 셀 위치 계산
+                e.stopPropagation();
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const cellWidth = 60;
+                const clickedCellOffset = Math.floor(clickX / cellWidth);
+                const actualClickedCol = taskStartIndex + clickedCellOffset;
+
+                console.log("Task name area clicked:", {
+                  clickX,
+                  clickedCellOffset,
+                  taskStartIndex,
+                  actualClickedCol,
+                  originalColIndex: colIndex,
+                });
+
+                // 실제 클릭한 셀 위치로 이벤트 발생
+                onMouseDown(rowIndex, actualClickedCol, e);
               }}
               onClick={(e) => {
                 if (onTaskClick && task) {
@@ -174,11 +199,12 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             let previewEndCol = 0;
 
             if (dragState.dragType === "move") {
-              // 이동 프리뷰
+              // 이동 프리뷰 - clickOffset 고려
               const taskDuration =
                 dates.indexOf(originalTask.endDate) -
                 dates.indexOf(originalTask.startDate);
-              previewStartCol = dragState.currentPos?.col || 0;
+              const clickOffset = dragState.clickOffset || 0;
+              previewStartCol = (dragState.currentPos?.col || 0) - clickOffset;
               previewEndCol = previewStartCol + taskDuration;
             } else if (dragState.dragType === "resize-start") {
               // 시작점 리사이즈 프리뷰
