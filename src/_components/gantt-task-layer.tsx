@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { Task, DragState, DragSelection } from "@/types/gantt-types";
 import { CELL_WIDTH, CELL_HEIGHT } from "@/_constants/gantt-constants";
 import { getTaskForCell } from "@/_utils/task-utils";
@@ -24,125 +24,287 @@ interface GanttTaskLayerProps {
   onContextMenu?: (row: number, col: number, e: React.MouseEvent) => void;
 }
 
-export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = ({
-  dates,
-  rows,
-  tasks,
-  dragState,
-  dragSelection,
-  onMouseDown,
-  onMouseEnter,
-  onTaskClick,
-  onResizeStart,
-  onResizeEnd,
-  onContextMenu,
-}) => {
-  const containerWidth = dates.length * CELL_WIDTH;
-  const containerHeight = rows.length * CELL_HEIGHT;
+// 개별 태스크 컴포넌트 - 메모이제이션으로 최적화
+const TaskItem = React.memo<{
+  task: Task;
+  x: number;
+  y: number;
+  width: number;
+  startCol: number;
+  endCol: number;
+  dragState: DragState;
+  onMouseDown: (row: number, col: number, e: React.MouseEvent) => void;
+  onMouseEnter: (row: number, col: number) => void;
+  onTaskClick: (task: Task, e: React.MouseEvent) => void;
+  onResizeStart: (rowIndex: number, colIndex: number, taskId: string) => void;
+  onResizeEnd: (rowIndex: number, colIndex: number, taskId: string) => void;
+  onContextMenu?: (row: number, col: number, e: React.MouseEvent) => void;
+}>(
+  ({
+    task,
+    x,
+    y,
+    width,
+    startCol,
+    endCol,
+    dragState,
+    onMouseDown,
+    onMouseEnter,
+    onTaskClick,
+    onResizeStart,
+    onResizeEnd,
+    onContextMenu,
+  }) => {
+    // 현재 태스크가 드래그 중인지 확인
+    const isBeingDragged =
+      dragState.isDragging &&
+      dragState.taskId === task.id &&
+      (dragState.dragType === "move" ||
+        dragState.dragType === "resize-start" ||
+        dragState.dragType === "resize-end");
 
-  return (
-    <div
-      className="absolute top-0 left-0 pointer-events-none"
-      style={{
-        width: containerWidth,
-        height: containerHeight,
-        zIndex: 2,
-      }}
-    >
-      {/* 태스크 렌더링 */}
-      {tasks.map((task) => {
-        const startCol = dates.indexOf(task.startDate);
-        const endCol = dates.indexOf(task.endDate);
+    return (
+      <div
+        className={`absolute pointer-events-auto cursor-pointer group task-item ${
+          isBeingDragged ? "dragging" : ""
+        }`}
+        style={{
+          left: x,
+          top: y,
+          width: width,
+          height: CELL_HEIGHT,
+          backgroundColor: task.color,
+          border: "1px solid rgba(0,0,0,0.2)",
+          borderRadius: "4px",
+          display: "flex",
+          alignItems: "center",
+          paddingLeft: "8px",
+          paddingRight: "8px",
+          fontSize: "12px",
+          fontWeight: "500",
+          color: "#fff",
+          textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+          zIndex: 10,
+        }}
+        onMouseDown={(e) => onMouseDown(task.row, startCol, e)}
+        onMouseEnter={() => onMouseEnter(task.row, startCol)}
+        onClick={(e) => {
+          e.stopPropagation();
+          onTaskClick(task, e);
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          console.log("Task right click:", {
+            taskId: task.id,
+            row: task.row,
+            col: startCol,
+          });
+          if (onContextMenu) {
+            onContextMenu(task.row, startCol, e);
+          }
+        }}
+      >
+        {/* 태스크 이름 */}
+        <span className="truncate flex-1">{task.name}</span>
 
-        if (startCol === -1 || endCol === -1) return null;
+        {/* 리사이즈 핸들 - 시작 */}
+        <div
+          className="absolute left-0 top-0 w-1 h-full cursor-w-resize opacity-0 group-hover:opacity-100 bg-white/50"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onResizeStart(task.row, startCol, task.id);
+          }}
+        />
 
-        const width = (endCol - startCol + 1) * CELL_WIDTH;
-        const x = startCol * CELL_WIDTH;
-        const y = task.row * CELL_HEIGHT;
+        {/* 리사이즈 핸들 - 끝 */}
+        <div
+          className="absolute right-0 top-0 w-1 h-full cursor-e-resize opacity-0 group-hover:opacity-100 bg-white/50"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onResizeEnd(task.row, endCol, task.id);
+          }}
+        />
+      </div>
+    );
+  }
+);
 
-        return (
+TaskItem.displayName = "TaskItem";
+
+export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = React.memo(
+  ({
+    dates,
+    rows,
+    tasks,
+    dragState,
+    dragSelection,
+    onMouseDown,
+    onMouseEnter,
+    onTaskClick,
+    onResizeStart,
+    onResizeEnd,
+    onContextMenu,
+  }) => {
+    const containerWidth = dates.length * CELL_WIDTH;
+    const containerHeight = rows.length * CELL_HEIGHT;
+
+    // 드래그 미리보기 최적화 - 필요한 셀만 계산
+    const dragPreviewCells = useMemo(() => {
+      if (!dragState.isDragging || !dragState.currentPos || !dragState.startPos)
+        return [];
+
+      const cells = [];
+      // 드래그 영역 주변만 계산 (전체 그리드 대신)
+      const buffer = 2; // 주변 2셀까지만
+      const minRow = Math.max(
+        0,
+        Math.min(dragState.startPos.row, dragState.currentPos.row) - buffer
+      );
+      const maxRow = Math.min(
+        rows.length - 1,
+        Math.max(dragState.startPos.row, dragState.currentPos.row) + buffer
+      );
+      const minCol = Math.max(
+        0,
+        Math.min(dragState.startPos.col, dragState.currentPos.col) - buffer
+      );
+      const maxCol = Math.min(
+        dates.length - 1,
+        Math.max(dragState.startPos.col, dragState.currentPos.col) + buffer
+      );
+
+      for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
+        for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
+          const preview = getTaskPreview(
+            rowIndex,
+            colIndex,
+            dragState,
+            tasks,
+            dates
+          );
+          if (preview) {
+            cells.push({ rowIndex, colIndex, preview });
+          }
+        }
+      }
+
+      return cells;
+    }, [dragState, tasks, dates, rows.length]);
+
+    // 드래그 영역 셀들 최적화
+    const dragAreaCells = useMemo(() => {
+      if (
+        !dragState.isDragging ||
+        dragState.dragType !== "new" ||
+        !dragState.currentPos ||
+        !dragState.startPos
+      )
+        return [];
+
+      const cells = [];
+      const minRow = Math.min(dragState.startPos.row, dragState.currentPos.row);
+      const maxRow = Math.max(dragState.startPos.row, dragState.currentPos.row);
+      const minCol = Math.min(dragState.startPos.col, dragState.currentPos.col);
+      const maxCol = Math.max(dragState.startPos.col, dragState.currentPos.col);
+
+      for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
+        for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
+          if (isCellInDragArea(rowIndex, colIndex, dragState)) {
+            cells.push({ rowIndex, colIndex });
+          }
+        }
+      }
+
+      return cells;
+    }, [dragState]);
+
+    // 드래그 선택 영역 셀들 최적화
+    const dragSelectionCells = useMemo(() => {
+      if (
+        !dragSelection.isSelected ||
+        !dragSelection.startPos ||
+        !dragSelection.endPos
+      )
+        return [];
+
+      const cells = [];
+      const minRow = Math.min(
+        dragSelection.startPos.row,
+        dragSelection.endPos.row
+      );
+      const maxRow = Math.max(
+        dragSelection.startPos.row,
+        dragSelection.endPos.row
+      );
+      const minCol = Math.min(
+        dragSelection.startPos.col,
+        dragSelection.endPos.col
+      );
+      const maxCol = Math.max(
+        dragSelection.startPos.col,
+        dragSelection.endPos.col
+      );
+
+      for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
+        for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
+          if (isCellInDragSelection(rowIndex, colIndex, dragSelection)) {
+            cells.push({ rowIndex, colIndex });
+          }
+        }
+      }
+
+      return cells;
+    }, [dragSelection]);
+
+    return (
+      <div
+        className="absolute top-0 left-0 pointer-events-none"
+        style={{
+          width: containerWidth,
+          height: containerHeight,
+          zIndex: 2,
+        }}
+      >
+        {/* 태스크 렌더링 */}
+        {tasks.map((task) => {
+          const startCol = dates.indexOf(task.startDate);
+          const endCol = dates.indexOf(task.endDate);
+
+          if (startCol === -1 || endCol === -1) return null;
+
+          const width = (endCol - startCol + 1) * CELL_WIDTH;
+          const x = startCol * CELL_WIDTH;
+          const y = task.row * CELL_HEIGHT;
+
+          return (
+            <TaskItem
+              key={task.id}
+              task={task}
+              x={x}
+              y={y}
+              width={width}
+              startCol={startCol}
+              endCol={endCol}
+              dragState={dragState}
+              onMouseDown={onMouseDown}
+              onMouseEnter={onMouseEnter}
+              onTaskClick={onTaskClick}
+              onResizeStart={onResizeStart}
+              onResizeEnd={onResizeEnd}
+              onContextMenu={onContextMenu}
+            />
+          );
+        })}
+
+        {/* 드래그 중인 태스크 미리보기 */}
+        {dragState.isDragging && dragState.currentPos && (
           <div
-            key={task.id}
-            className="absolute pointer-events-auto cursor-pointer group"
+            className="absolute"
             style={{
-              left: x,
-              top: y,
-              width: width,
-              height: CELL_HEIGHT,
-              backgroundColor: task.color,
-              border: "1px solid rgba(0,0,0,0.2)",
-              borderRadius: "4px",
-              display: "flex",
-              alignItems: "center",
-              paddingLeft: "8px",
-              paddingRight: "8px",
-              fontSize: "12px",
-              fontWeight: "500",
-              color: "#fff",
-              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-              zIndex: 10,
-            }}
-            onMouseDown={(e) => onMouseDown(task.row, startCol, e)}
-            onMouseEnter={() => onMouseEnter(task.row, startCol)}
-            onClick={(e) => {
-              e.stopPropagation();
-              onTaskClick(task, e);
-            }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              console.log("Task right click:", {
-                taskId: task.id,
-                row: task.row,
-                col: startCol,
-              });
-              if (onContextMenu) {
-                onContextMenu(task.row, startCol, e);
-              }
+              zIndex: 20,
             }}
           >
-            {/* 태스크 이름 */}
-            <span className="truncate flex-1">{task.name}</span>
-
-            {/* 리사이즈 핸들 - 시작 */}
-            <div
-              className="absolute left-0 top-0 w-1 h-full cursor-w-resize opacity-0 group-hover:opacity-100 bg-white/50"
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onResizeStart(task.row, startCol, task.id);
-              }}
-            />
-
-            {/* 리사이즈 핸들 - 끝 */}
-            <div
-              className="absolute right-0 top-0 w-1 h-full cursor-e-resize opacity-0 group-hover:opacity-100 bg-white/50"
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                onResizeEnd(task.row, endCol, task.id);
-              }}
-            />
-          </div>
-        );
-      })}
-
-      {/* 드래그 중인 태스크 미리보기 */}
-      {dragState.isDragging && dragState.currentPos && (
-        <div
-          className="absolute"
-          style={{
-            zIndex: 20,
-          }}
-        >
-          {dates.map((_, colIndex) =>
-            rows.map((_, rowIndex) => {
-              const preview = getTaskPreview(
-                rowIndex,
-                colIndex,
-                dragState,
-                tasks,
-                dates
-              );
-              if (!preview) return null;
-
+            {dragPreviewCells.map(({ rowIndex, colIndex, preview }) => {
               const startCol = dates.indexOf(preview.startDate);
               const endCol = dates.indexOf(preview.endDate);
               const width = (endCol - startCol + 1) * CELL_WIDTH;
@@ -152,36 +314,37 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = ({
               return (
                 <div
                   key={`preview-${rowIndex}-${colIndex}`}
-                  className="absolute pointer-events-none"
+                  className="absolute pointer-events-none drag-preview"
                   style={{
                     left: x,
                     top: y,
                     width: width,
                     height: CELL_HEIGHT,
                     backgroundColor: preview.color,
-                    border: "2px dashed rgba(0,0,0,0.4)",
+                    border: "2px dashed rgba(0,0,0,0.6)",
                     borderRadius: "4px",
-                    opacity: 0.6,
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
                   }}
-                />
+                >
+                  {/* 미리보기 텍스트 */}
+                  <div className="flex items-center h-full px-2 text-xs font-medium text-white text-shadow">
+                    {preview.name}
+                  </div>
+                </div>
               );
-            })
-          )}
-        </div>
-      )}
+            })}
+          </div>
+        )}
 
-      {/* 새 태스크 드래그 영역 표시 */}
-      {dragState.isDragging && dragState.dragType === "new" && (
-        <div
-          className="absolute"
-          style={{
-            zIndex: 15,
-          }}
-        >
-          {dates.map((_, colIndex) =>
-            rows.map((_, rowIndex) => {
-              if (!isCellInDragArea(rowIndex, colIndex, dragState)) return null;
-
+        {/* 새 태스크 드래그 영역 표시 */}
+        {dragState.isDragging && dragState.dragType === "new" && (
+          <div
+            className="absolute"
+            style={{
+              zIndex: 15,
+            }}
+          >
+            {dragAreaCells.map(({ rowIndex, colIndex }) => {
               return (
                 <div
                   key={`drag-area-${rowIndex}-${colIndex}`}
@@ -196,24 +359,19 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = ({
                   }}
                 />
               );
-            })
-          )}
-        </div>
-      )}
+            })}
+          </div>
+        )}
 
-      {/* 드래그 선택 영역 표시 */}
-      {dragSelection.isSelected && (
-        <div
-          className="absolute"
-          style={{
-            zIndex: 15,
-          }}
-        >
-          {dates.map((_, colIndex) =>
-            rows.map((_, rowIndex) => {
-              if (!isCellInDragSelection(rowIndex, colIndex, dragSelection))
-                return null;
-
+        {/* 드래그 선택 영역 표시 */}
+        {dragSelection.isSelected && (
+          <div
+            className="absolute"
+            style={{
+              zIndex: 15,
+            }}
+          >
+            {dragSelectionCells.map(({ rowIndex, colIndex }) => {
               return (
                 <div
                   key={`selection-${rowIndex}-${colIndex}`}
@@ -228,58 +386,81 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = ({
                   }}
                 />
               );
-            })
-          )}
-        </div>
-      )}
-
-      {/* 투명한 상호작용 레이어 */}
-      <div
-        className="absolute top-0 left-0 pointer-events-auto"
-        style={{
-          width: containerWidth,
-          height: containerHeight,
-          zIndex: 5,
-        }}
-      >
-        {rows.map((_, rowIndex) =>
-          dates.map((_, colIndex) => {
-            // 태스크가 있는 셀은 상호작용 비활성화
-            const existingTask = getTaskForCell(
-              rowIndex,
-              colIndex,
-              tasks,
-              dates
-            );
-            if (existingTask) return null;
-
-            return (
-              <div
-                key={`interaction-${rowIndex}-${colIndex}`}
-                className="absolute"
-                style={{
-                  left: colIndex * CELL_WIDTH,
-                  top: rowIndex * CELL_HEIGHT,
-                  width: CELL_WIDTH,
-                  height: CELL_HEIGHT,
-                }}
-                onMouseDown={(e) => onMouseDown(rowIndex, colIndex, e)}
-                onMouseEnter={() => onMouseEnter(rowIndex, colIndex)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  console.log("Empty cell right click:", {
-                    row: rowIndex,
-                    col: colIndex,
-                  });
-                  if (onContextMenu) {
-                    onContextMenu(rowIndex, colIndex, e);
-                  }
-                }}
-              />
-            );
-          })
+            })}
+          </div>
         )}
+
+        {/* 투명한 상호작용 레이어 */}
+        <div
+          className="absolute top-0 left-0 pointer-events-auto"
+          style={{
+            width: containerWidth,
+            height: containerHeight,
+            zIndex: 5,
+          }}
+          onMouseDown={(e) => {
+            // 빈 영역 클릭 처리 - 전체 레이어에서 처리
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / CELL_WIDTH);
+            const row = Math.floor(y / CELL_HEIGHT);
+
+            if (
+              col >= 0 &&
+              col < dates.length &&
+              row >= 0 &&
+              row < rows.length
+            ) {
+              // 태스크가 있는 셀인지 확인
+              const existingTask = getTaskForCell(row, col, tasks, dates);
+              if (!existingTask) {
+                onMouseDown(row, col, e);
+              }
+            }
+          }}
+          onMouseEnter={(e) => {
+            // 마우스 엔터 처리
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / CELL_WIDTH);
+            const row = Math.floor(y / CELL_HEIGHT);
+
+            if (
+              col >= 0 &&
+              col < dates.length &&
+              row >= 0 &&
+              row < rows.length
+            ) {
+              onMouseEnter(row, col);
+            }
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            // 우클릭 처리
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const col = Math.floor(x / CELL_WIDTH);
+            const row = Math.floor(y / CELL_HEIGHT);
+
+            if (
+              col >= 0 &&
+              col < dates.length &&
+              row >= 0 &&
+              row < rows.length
+            ) {
+              console.log("Empty cell right click:", { row, col });
+              if (onContextMenu) {
+                onContextMenu(row, col, e);
+              }
+            }
+          }}
+        />
       </div>
-    </div>
-  );
-};
+    );
+  }
+);
+
+GanttTaskLayer.displayName = "GanttTaskLayer";

@@ -120,3 +120,39 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 드래그 상태 스타일 */
+.task-item {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.task-item.dragging {
+  opacity: 0.2;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.task-item.dragging * {
+  pointer-events: none;
+}
+
+/* 드래그 미리보기 스타일 */
+.drag-preview {
+  animation: dragPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes dragPulse {
+  from {
+    opacity: 0.7;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+}
+
+/* 텍스트 그림자 유틸리티 */
+.text-shadow {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}

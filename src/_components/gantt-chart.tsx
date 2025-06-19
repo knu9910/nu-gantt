@@ -41,7 +41,7 @@ export const GanttChart = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dates, setDates] = useState(() => generateDates([]));
   const [rows, setRows] = useState<string[]>(() =>
-    Array(15)
+    Array(100)
       .fill("")
       .map((_, i) => `행 ${i + 1}`)
   );
@@ -292,7 +292,8 @@ export const GanttChart = () => {
 
         {/* 성능 정보 표시 */}
         <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
-          🚀 Canvas 최적화 활성화
+          🚀 하이브리드 캔버스 최적화 (행: {rows.length}, 셀:{" "}
+          {dates.length * rows.length})
         </div>
       </div>
 
