@@ -4,11 +4,7 @@ import React, { useMemo } from "react";
 import { Task, DragState, DragSelection } from "@/types/gantt-types";
 import { CELL_WIDTH, CELL_HEIGHT } from "@/_constants/gantt-constants";
 import { getTaskForCell } from "@/_utils/task-utils";
-import {
-  isCellInDragArea,
-  isCellInDragSelection,
-  getTaskPreview,
-} from "@/_utils/drag-utils";
+import { isCellInDragArea, isCellInDragSelection } from "@/_utils/drag-utils";
 
 interface GanttTaskLayerProps {
   dates: string[];
@@ -86,8 +82,61 @@ const TaskItem = React.memo<{
           textShadow: "0 1px 2px rgba(0,0,0,0.5)",
           zIndex: 10,
         }}
-        onMouseDown={(e) => onMouseDown(task.row, startCol, e)}
-        onMouseEnter={() => onMouseEnter(task.row, startCol)}
+        onMouseDown={(e) => {
+          // TaskItem 내에서 실제 클릭한 셀 위치 계산
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+
+          // 클릭한 위치를 셀 단위로 변환
+          const clickedCellOffset = Math.floor(clickX / CELL_WIDTH);
+
+          // 실제 클릭한 셀의 인덱스 계산
+          const actualClickedCol = startCol + clickedCellOffset;
+
+          // 태스크 범위를 벗어나지 않도록 제한
+          const validClickedCol = Math.max(
+            startCol,
+            Math.min(endCol, actualClickedCol)
+          );
+
+          console.log("Task mouse down:", {
+            taskId: task.id,
+            taskName: task.name,
+            startCol,
+            endCol,
+            clickX,
+            clickedCellOffset,
+            actualClickedCol,
+            validClickedCol,
+            CELL_WIDTH,
+          });
+
+          onMouseDown(task.row, validClickedCol, e);
+        }}
+        onMouseEnter={(e) => {
+          // 드래그 중일 때만 정확한 셀 위치 계산
+          if (dragState.isDragging) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+
+            // 마우스 위치를 셀 단위로 변환
+            const hoveredCellOffset = Math.floor(mouseX / CELL_WIDTH);
+
+            // 실제 마우스가 위치한 셀의 인덱스 계산
+            const actualHoveredCol = startCol + hoveredCellOffset;
+
+            // 태스크 범위를 벗어나지 않도록 제한
+            const validHoveredCol = Math.max(
+              startCol,
+              Math.min(endCol, actualHoveredCol)
+            );
+
+            onMouseEnter(task.row, validHoveredCol);
+          } else {
+            // 드래그 중이 아닐 때는 시작 셀로 처리
+            onMouseEnter(task.row, startCol);
+          }
+        }}
         onClick={(e) => {
           e.stopPropagation();
           onTaskClick(task, e);
@@ -148,48 +197,62 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = React.memo(
     const containerWidth = dates.length * CELL_WIDTH;
     const containerHeight = rows.length * CELL_HEIGHT;
 
-    // 드래그 미리보기 최적화 - 필요한 셀만 계산
-    const dragPreviewCells = useMemo(() => {
-      if (!dragState.isDragging || !dragState.currentPos || !dragState.startPos)
-        return [];
-
-      const cells = [];
-      // 드래그 영역 주변만 계산 (전체 그리드 대신)
-      const buffer = 2; // 주변 2셀까지만
-      const minRow = Math.max(
-        0,
-        Math.min(dragState.startPos.row, dragState.currentPos.row) - buffer
-      );
-      const maxRow = Math.min(
-        rows.length - 1,
-        Math.max(dragState.startPos.row, dragState.currentPos.row) + buffer
-      );
-      const minCol = Math.max(
-        0,
-        Math.min(dragState.startPos.col, dragState.currentPos.col) - buffer
-      );
-      const maxCol = Math.min(
-        dates.length - 1,
-        Math.max(dragState.startPos.col, dragState.currentPos.col) + buffer
-      );
-
-      for (let rowIndex = minRow; rowIndex <= maxRow; rowIndex++) {
-        for (let colIndex = minCol; colIndex <= maxCol; colIndex++) {
-          const preview = getTaskPreview(
-            rowIndex,
-            colIndex,
-            dragState,
-            tasks,
-            dates
-          );
-          if (preview) {
-            cells.push({ rowIndex, colIndex, preview });
-          }
-        }
+    // 드래그 미리보기 계산 - 태스크 단위로 최적화
+    const dragPreviewTask = useMemo(() => {
+      if (
+        !dragState.isDragging ||
+        !dragState.currentPos ||
+        !dragState.taskId ||
+        dragState.dragType === "new"
+      ) {
+        return null;
       }
 
-      return cells;
-    }, [dragState, tasks, dates, rows.length]);
+      const originalTask = tasks.find((t) => t.id === dragState.taskId);
+      if (!originalTask) return null;
+
+      const originalStartCol = dates.indexOf(originalTask.startDate);
+      const originalEndCol = dates.indexOf(originalTask.endDate);
+      const taskDuration = originalEndCol - originalStartCol;
+      const clickOffset = dragState.clickOffset || 0;
+
+      let previewStartCol: number;
+      let previewEndCol: number;
+
+      if (dragState.dragType === "move") {
+        // 이동: clickOffset을 고려한 위치 계산
+        previewStartCol = dragState.currentPos.col - clickOffset;
+        previewEndCol = previewStartCol + taskDuration;
+      } else if (dragState.dragType === "resize-start") {
+        // 시작점 리사이즈
+        previewStartCol = Math.min(dragState.currentPos.col, originalEndCol);
+        previewEndCol = originalEndCol;
+      } else if (dragState.dragType === "resize-end") {
+        // 끝점 리사이즈
+        previewStartCol = originalStartCol;
+        previewEndCol = Math.max(dragState.currentPos.col, originalStartCol);
+      } else {
+        return null;
+      }
+
+      // 유효한 범위 체크
+      if (
+        previewStartCol < 0 ||
+        previewEndCol >= dates.length ||
+        previewStartCol > previewEndCol
+      ) {
+        return null;
+      }
+
+      return {
+        ...originalTask,
+        row: dragState.currentPos.row,
+        startCol: previewStartCol,
+        endCol: previewEndCol,
+        startDate: dates[previewStartCol],
+        endDate: dates[previewEndCol],
+      };
+    }, [dragState, tasks, dates]);
 
     // 드래그 영역 셀들 최적화
     const dragAreaCells = useMemo(() => {
@@ -297,42 +360,33 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = React.memo(
         })}
 
         {/* 드래그 중인 태스크 미리보기 */}
-        {dragState.isDragging && dragState.currentPos && (
+        {dragState.isDragging && dragState.currentPos && dragPreviewTask && (
           <div
             className="absolute"
             style={{
               zIndex: 20,
             }}
           >
-            {dragPreviewCells.map(({ rowIndex, colIndex, preview }) => {
-              const startCol = dates.indexOf(preview.startDate);
-              const endCol = dates.indexOf(preview.endDate);
-              const width = (endCol - startCol + 1) * CELL_WIDTH;
-              const x = colIndex * CELL_WIDTH;
-              const y = rowIndex * CELL_HEIGHT;
-
-              return (
-                <div
-                  key={`preview-${rowIndex}-${colIndex}`}
-                  className="absolute pointer-events-none drag-preview"
-                  style={{
-                    left: x,
-                    top: y,
-                    width: width,
-                    height: CELL_HEIGHT,
-                    backgroundColor: preview.color,
-                    border: "2px dashed rgba(0,0,0,0.6)",
-                    borderRadius: "4px",
-                    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-                  }}
-                >
-                  {/* 미리보기 텍스트 */}
-                  <div className="flex items-center h-full px-2 text-xs font-medium text-white text-shadow">
-                    {preview.name}
-                  </div>
-                </div>
-              );
-            })}
+            <div
+              className="absolute pointer-events-none drag-preview"
+              style={{
+                left: dragPreviewTask.startCol * CELL_WIDTH,
+                top: dragPreviewTask.row * CELL_HEIGHT,
+                width:
+                  (dragPreviewTask.endCol - dragPreviewTask.startCol + 1) *
+                  CELL_WIDTH,
+                height: CELL_HEIGHT,
+                backgroundColor: dragPreviewTask.color,
+                border: "2px dashed rgba(0,0,0,0.6)",
+                borderRadius: "4px",
+                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+              }}
+            >
+              {/* 미리보기 텍스트 */}
+              <div className="flex items-center h-full px-2 text-xs font-medium text-white text-shadow">
+                {dragPreviewTask.name}
+              </div>
+            </div>
           </div>
         )}
 

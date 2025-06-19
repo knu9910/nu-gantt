@@ -69,7 +69,7 @@ export const getTaskPreview = (
     return null;
   }
 
-  const { dragType, taskId, currentPos } = dragState;
+  const { dragType, taskId, currentPos, clickOffset } = dragState;
 
   if (taskId) {
     const originalTask = tasks.find((t) => t.id === taskId);
@@ -81,12 +81,30 @@ export const getTaskPreview = (
     if (dragType === "move") {
       // 이동 프리뷰 - 클릭 오프셋 고려
       const taskDuration = originalEndCol - originalStartCol;
-      const clickOffset = dragState.clickOffset || 0;
-      const previewStartCol = currentPos.col - clickOffset;
+      const offset = clickOffset || 0;
+      const previewStartCol = currentPos.col - offset;
       const previewEndCol = previewStartCol + taskDuration;
 
+      console.log("Preview calculation:", {
+        taskId: originalTask.id,
+        originalStartCol,
+        originalEndCol,
+        taskDuration,
+        clickOffset: offset,
+        currentCol: currentPos.col,
+        previewStartCol,
+        previewEndCol,
+        checkingCol: col,
+        isInRange: col >= previewStartCol && col <= previewEndCol,
+      });
+
       if (col >= previewStartCol && col <= previewEndCol) {
-        return { ...originalTask, isPreview: true };
+        return {
+          ...originalTask,
+          isPreview: true,
+          startDate: dates[previewStartCol] || originalTask.startDate,
+          endDate: dates[previewEndCol] || originalTask.endDate,
+        };
       }
     } else if (dragType === "resize-start") {
       // 시작점 리사이즈 프리뷰
@@ -94,7 +112,12 @@ export const getTaskPreview = (
       const previewEndCol = originalEndCol;
 
       if (col >= previewStartCol && col <= previewEndCol) {
-        return { ...originalTask, isPreview: true };
+        return {
+          ...originalTask,
+          isPreview: true,
+          startDate: dates[previewStartCol] || originalTask.startDate,
+          endDate: dates[previewEndCol] || originalTask.endDate,
+        };
       }
     } else if (dragType === "resize-end") {
       // 끝점 리사이즈 프리뷰
@@ -102,7 +125,12 @@ export const getTaskPreview = (
       const previewEndCol = Math.max(currentPos.col, originalStartCol);
 
       if (col >= previewStartCol && col <= previewEndCol) {
-        return { ...originalTask, isPreview: true };
+        return {
+          ...originalTask,
+          isPreview: true,
+          startDate: dates[previewStartCol] || originalTask.startDate,
+          endDate: dates[previewEndCol] || originalTask.endDate,
+        };
       }
     }
   }
