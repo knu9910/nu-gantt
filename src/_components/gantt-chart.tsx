@@ -280,9 +280,18 @@ export const GanttChart: React.FC = () => {
 
         {/* 오늘로 가는 버튼 */}
         <button
-          onClick={() => scrollToToday(ganttRef, dates)}
+          onClick={() => {
+            // 월 선택 해제하고 오늘 날짜 열 선택
+            setMonthSelection(clearMonthSelection());
+            scrollToToday(ganttRef, dates, (columnIndex) => {
+              setColumnSelection({
+                isSelected: true,
+                selectedColumn: columnIndex,
+              });
+            });
+          }}
           className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 flex items-center gap-1"
-          title="오늘 날짜로 이동"
+          title="오늘 날짜로 이동하고 선택"
         >
           📅 오늘로 가기
         </button>

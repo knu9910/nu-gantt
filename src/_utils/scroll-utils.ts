@@ -75,11 +75,12 @@ export const scrollToDragArea = (
 };
 
 /**
- * 오늘 날짜로 스크롤
+ * 오늘 날짜로 스크롤하고 해당 열 선택
  */
 export const scrollToToday = (
   ganttRef: React.RefObject<HTMLDivElement | null>,
-  dates: string[]
+  dates: string[],
+  onColumnSelect?: (columnIndex: number) => void
 ) => {
   if (!ganttRef.current) return;
 
@@ -95,5 +96,10 @@ export const scrollToToday = (
       left: scrollLeft,
       behavior: "smooth",
     });
+
+    // 오늘 날짜 열 선택
+    if (onColumnSelect) {
+      onColumnSelect(todayIndex);
+    }
   }, SCROLL_DELAY);
 };
