@@ -23,6 +23,7 @@ import {
   clearColumnSelection,
   clearMonthSelection,
 } from "../_utils/selection-utils";
+import { scrollToToday } from "../_utils/scroll-utils";
 
 // Component imports
 import { GanttHeader } from "./gantt-header";
@@ -273,6 +274,15 @@ export const GanttChart: React.FC = () => {
           className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
         />
         <span className="text-sm text-gray-500">(현재 {rows.length}개 행)</span>
+
+        {/* 오늘로 가는 버튼 */}
+        <button
+          onClick={() => scrollToToday(ganttRef, dates)}
+          className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 flex items-center gap-1"
+          title="오늘 날짜로 이동"
+        >
+          📅 오늘로 가기
+        </button>
 
         {/* 선택 해제 버튼 */}
         <button

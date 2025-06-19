@@ -8,6 +8,7 @@ import {
   CELL_HEIGHT,
   SCROLL_DELAY,
 } from "../_constants/gantt-constants";
+import { format } from "date-fns";
 
 /**
  * 특정 태스크 위치로 스크롤
@@ -71,4 +72,28 @@ export const scrollToDragArea = (
   const centerCol = Math.floor((startCol + endCol) / 2);
 
   scrollToCell(ganttRef, centerRow, centerCol);
+};
+
+/**
+ * 오늘 날짜로 스크롤
+ */
+export const scrollToToday = (
+  ganttRef: React.RefObject<HTMLDivElement | null>,
+  dates: string[]
+) => {
+  if (!ganttRef.current) return;
+
+  const today = format(new Date(), "yyyy-MM-dd"); // YYYY-MM-DD 형식
+  const todayIndex = dates.indexOf(today);
+
+  if (todayIndex === -1) return; // 오늘 날짜가 범위에 없으면 스크롤하지 않음
+
+  const scrollLeft = todayIndex * CELL_WIDTH;
+
+  setTimeout(() => {
+    ganttRef.current?.scrollTo({
+      left: scrollLeft,
+      behavior: "smooth",
+    });
+  }, SCROLL_DELAY);
 };
