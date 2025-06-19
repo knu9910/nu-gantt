@@ -1,48 +1,41 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { taskColors } from "@/_constants/task-colors";
-
-// Utils imports
-import { generateDates } from "../_utils/date-utils";
 import {
+  ColumnSelection,
+  ContextMenuState,
+  DragSelection,
+  DragState,
+  MonthSelection,
+  Task,
+  TaskEditModalState,
+} from "@/types/gantt-types";
+import { generateDates } from "@/_utils/date-utils";
+import {
+  createColumnClickHandler,
+  createGanttMouseMoveHandler,
+  createMonthClickHandler,
   createMouseDownHandler,
+  createMouseEnterHandler,
   createMouseUpHandler,
   createRightClickHandler,
-  createMouseEnterHandler,
-  createGanttMouseMoveHandler,
   createTaskFromContextHandler,
-  createColumnClickHandler,
-  createMonthClickHandler,
-} from "../_utils/event-handlers";
+} from "@/_utils/event-handlers";
+import { clearMonthSelection } from "@/_utils/selection-utils";
 import {
   createDeleteTaskHandler,
   createUpdateTaskHandler,
-} from "../_utils/task-utils";
-import {
-  clearColumnSelection,
-  clearMonthSelection,
-} from "../_utils/selection-utils";
-import { scrollToToday } from "../_utils/scroll-utils";
-
-// Component imports
+} from "@/_utils/task-utils";
+import React, { useState, useRef, useEffect } from "react";
 import { GanttHeader } from "./gantt-header";
 import { GanttCell } from "./gantt-cell";
 import { ContextMenu } from "./context-menu";
 import { TaskEditModal } from "./task-edit-modal";
 import { TaskList } from "./task-list";
-import {
-  Task,
-  DragState,
-  ContextMenuState,
-  ColumnSelection,
-  DragSelection,
-  MonthSelection,
-  TaskEditModalState,
-} from "../types/gantt-types";
-import { useHolidays } from "../hooks/use-holidays";
+import { TodayButton } from "./today-button";
+import { useHolidays } from "@/hooks/use-holidays";
+import { taskColors } from "@/_constants/task-colors";
 
-export const GanttChart: React.FC = () => {
+export const GanttChart = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [dates, setDates] = useState(() => generateDates([]));
   const [rows, setRows] = useState<string[]>(() =>
@@ -243,15 +236,6 @@ export const GanttChart: React.FC = () => {
     setColumnSelection
   );
 
-  // 모든 선택 해제 함수
-  const clearAllSelections = () => {
-    setDragSelection({
-      isSelected: false,
-    });
-    setColumnSelection(clearColumnSelection());
-    setMonthSelection(clearMonthSelection());
-  };
-
   // 태스크 삭제
   const deleteTask = createDeleteTaskHandler(tasks, setTasks);
 
@@ -260,8 +244,6 @@ export const GanttChart: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">간트 차트</h1>
-
       {/* 행 개수 조절 컨트롤 */}
       <div className="mb-4 flex items-center gap-4">
         <label htmlFor="rowCount" className="text-sm font-medium">
@@ -279,30 +261,12 @@ export const GanttChart: React.FC = () => {
         <span className="text-sm text-gray-500">(현재 {rows.length}개 행)</span>
 
         {/* 오늘로 가는 버튼 */}
-        <button
-          onClick={() => {
-            // 월 선택 해제하고 오늘 날짜 열 선택
-            setMonthSelection(clearMonthSelection());
-            scrollToToday(ganttRef, dates, (columnIndex) => {
-              setColumnSelection({
-                isSelected: true,
-                selectedColumn: columnIndex,
-              });
-            });
-          }}
-          className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 flex items-center gap-1"
-          title="오늘 날짜로 이동하고 선택"
-        >
-          📅 오늘로 가기
-        </button>
-
-        {/* 선택 해제 버튼 */}
-        <button
-          onClick={clearAllSelections}
-          className="px-3 py-1 bg-gray-500 text-white text-sm rounded hover:bg-gray-600"
-        >
-          선택 해제
-        </button>
+        <TodayButton
+          ganttRef={ganttRef}
+          dates={dates}
+          setMonthSelection={setMonthSelection}
+          setColumnSelection={setColumnSelection}
+        />
       </div>
 
       <div

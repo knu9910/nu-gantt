@@ -36,9 +36,19 @@ export const GANTT_COLORS = {
 
   // 헤더
   HEADER: {
-    BACKGROUND: "#F9FAFB",
-    TEXT: "#111827",
-    BORDER: "#D1D5DB",
+    MONTH: {
+      SELECTED: "#3B82F6", // bg-blue-500
+      SELECTED_TEXT: "#FFFFFF", // text-white
+      DEFAULT: "#F3F4F6", // bg-gray-100
+      HOVER: "#E5E7EB", // hover:bg-gray-200
+    },
+    DAY: {
+      SELECTED: "#3B82F6", // bg-blue-500
+      SELECTED_TEXT: "#FFFFFF", // text-white
+      DEFAULT: "#F9FAFB", // bg-gray-50
+      HOVER: "#E5E7EB", // hover:bg-gray-200
+      BORDER: "#D1D5DB", // border-gray-300
+    },
   },
 
   // 태스크

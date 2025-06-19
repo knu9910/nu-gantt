@@ -1,21 +1,11 @@
-import React from "react";
-import { ContextMenuProps } from "../types/gantt-types";
+import { ContextMenuProps } from '@/types/gantt/gantt-types';
+import React from 'react';
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({
-  show,
-  x,
-  y,
-  task,
-  onCreateTask,
-  onDeleteTask,
-}) => {
+export const ContextMenu = ({ show, x, y, task, onCreateTask, onDeleteTask }: ContextMenuProps) => {
   if (!show) return null;
 
   return (
-    <div
-      className="fixed bg-white border border-gray-300 rounded-md shadow-lg z-20 py-1"
-      style={{ left: x, top: y }}
-    >
+    <div className="fixed bg-white border border-gray-300 rounded-md shadow-lg z-20 py-1" style={{ left: x, top: y }}>
       {task ? (
         <button
           onClick={() => {
@@ -28,10 +18,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
           태스크 삭제
         </button>
       ) : (
-        <button
-          onClick={onCreateTask}
-          className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-        >
+        <button onClick={onCreateTask} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100">
           태스크 생성
         </button>
       )}

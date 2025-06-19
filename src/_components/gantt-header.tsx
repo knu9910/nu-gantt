@@ -1,15 +1,15 @@
-import React from "react";
-import { GanttHeaderProps } from "../types/gantt-types";
-import { isColumnSelected } from "../_utils/selection-utils";
-import { isHoliday } from "../_utils/holiday-utils";
+import { isColumnSelected } from "@/_utils/selection-utils";
+import { GANTT_COLORS } from "../_constants/gantt-colors";
 import {
   CELL_WIDTH,
   DAY_HEADER_HEIGHT,
   MONTH_HEADER_HEIGHT,
 } from "../_constants/gantt-constants";
-import { GANTT_COLORS } from "../_constants/gantt-colors";
-import { format } from "date-fns";
+import { GanttHeaderProps } from "../types/gantt-types";
+import { format } from "date-fns/format";
 import { ko } from "date-fns/locale";
+import React from "react";
+import { isHoliday } from "@/_utils/holiday-utils";
 
 // 월별 그룹화 함수
 const groupDatesByMonth = (dates: string[]) => {
@@ -35,14 +35,14 @@ const groupDatesByMonth = (dates: string[]) => {
   return monthGroups;
 };
 
-export const GanttHeader: React.FC<GanttHeaderProps> = ({
+export const GanttHeader = ({
   dates,
   holidays,
   columnSelection,
   monthSelection,
   onColumnClick,
   onMonthClick,
-}) => {
+}: GanttHeaderProps) => {
   const monthGroups = groupDatesByMonth(dates);
 
   return (
@@ -52,20 +52,23 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
         {monthGroups.map((group, groupIndex) => (
           <div
             key={`month-${groupIndex}`}
-            className={`
-              border-r border-b border-gray-300 text-sm font-bold text-center cursor-pointer flex items-center justify-center
-              ${
-                monthSelection.isSelected &&
-                monthSelection.selectedMonth === group.month
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }
-            `}
+            className="border-r border-b text-sm font-bold text-center cursor-pointer flex items-center justify-center hover:brightness-95"
             style={{
               width: `${group.count * CELL_WIDTH}px`,
               height: `${MONTH_HEADER_HEIGHT}px`,
               minWidth: `${group.count * CELL_WIDTH}px`,
               maxWidth: `${group.count * CELL_WIDTH}px`,
+              backgroundColor:
+                monthSelection.isSelected &&
+                monthSelection.selectedMonth === group.month
+                  ? GANTT_COLORS.HEADER.MONTH.SELECTED
+                  : GANTT_COLORS.HEADER.MONTH.DEFAULT,
+              color:
+                monthSelection.isSelected &&
+                monthSelection.selectedMonth === group.month
+                  ? GANTT_COLORS.HEADER.MONTH.SELECTED_TEXT
+                  : GANTT_COLORS.TEXT.PRIMARY,
+              borderColor: GANTT_COLORS.HEADER.DAY.BORDER,
             }}
             onClick={() =>
               onMonthClick(group.month, group.startIndex, group.count)
@@ -102,20 +105,22 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
           return (
             <div
               key={date}
-              className={`
-                border-r border-b border-gray-300 text-xs font-medium cursor-pointer flex flex-col items-center justify-center
-                ${
-                  isMonthSelected || isColumnSelectedSingle
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-50 hover:bg-gray-200"
-                }
-              `}
+              className="border-r border-b text-xs font-medium cursor-pointer flex flex-col items-center justify-center hover:brightness-95"
               style={{
                 width: `${CELL_WIDTH}px`,
                 height: `${DAY_HEADER_HEIGHT}px`,
                 minWidth: `${CELL_WIDTH}px`,
                 maxWidth: `${CELL_WIDTH}px`,
                 textAlign: "center",
+                backgroundColor:
+                  isMonthSelected || isColumnSelectedSingle
+                    ? GANTT_COLORS.HEADER.DAY.SELECTED
+                    : GANTT_COLORS.HEADER.DAY.DEFAULT,
+                color:
+                  isMonthSelected || isColumnSelectedSingle
+                    ? GANTT_COLORS.HEADER.DAY.SELECTED_TEXT
+                    : GANTT_COLORS.TEXT.PRIMARY,
+                borderColor: GANTT_COLORS.HEADER.DAY.BORDER,
               }}
               onClick={(e) => onColumnClick(colIndex, e)}
             >
@@ -145,7 +150,9 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
                       : isWeekend &&
                         !(isMonthSelected || isColumnSelectedSingle)
                       ? GANTT_COLORS.WEEKEND.TEXT
-                      : "#9CA3AF", // 기본 회색은 그대로 유지
+                      : isMonthSelected || isColumnSelectedSingle
+                      ? GANTT_COLORS.HEADER.DAY.SELECTED_TEXT
+                      : GANTT_COLORS.TEXT.MUTED,
                 }}
               >
                 {format(dateObj, "EEEEE", { locale: ko })}

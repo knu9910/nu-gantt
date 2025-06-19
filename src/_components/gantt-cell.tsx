@@ -1,26 +1,26 @@
-import React from "react";
-import { GanttCellProps } from "../types/gantt-types";
+import { GANTT_COLORS } from "@/_constants/gantt-colors";
 import {
+  CELL_HEIGHT,
+  CELL_WIDTH,
+  RESIZE_HANDLE_WIDTH,
+  TASK_BORDER_OFFSET,
+  TASK_NAME_PADDING,
+} from "@/_constants/gantt-constants";
+import { GanttCellProps } from "@/types/gantt-types";
+import {
+  getTaskPreview,
   isCellInDragArea,
   isCellInDragSelection,
-  getTaskPreview,
-} from "../_utils/drag-utils";
+} from "@/_utils/drag-utils";
+import { isHoliday } from "@/_utils/holiday-utils";
 import {
-  isColumnSelected,
   isColumnInMonthSelection,
-} from "../_utils/selection-utils";
-import { getTaskForCell } from "../_utils/task-utils";
-import { isHoliday } from "../_utils/holiday-utils";
-import {
-  CELL_WIDTH,
-  CELL_HEIGHT,
-  RESIZE_HANDLE_WIDTH,
-  TASK_NAME_PADDING,
-  TASK_BORDER_OFFSET,
-} from "../_constants/gantt-constants";
-import { GANTT_COLORS } from "../_constants/gantt-colors";
+  isColumnSelected,
+} from "@/_utils/selection-utils";
+import { getTaskForCell } from "@/_utils/task-utils";
+import React from "react";
 
-export const GanttCell: React.FC<GanttCellProps> = ({
+export const GanttCell = ({
   rowIndex,
   colIndex,
   dates,
@@ -36,7 +36,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
   onTaskClick,
   onResizeStart,
   onResizeEnd,
-}) => {
+}: GanttCellProps) => {
   const task = getTaskForCell(rowIndex, colIndex, tasks, dates);
   const taskPreview = getTaskPreview(
     rowIndex,

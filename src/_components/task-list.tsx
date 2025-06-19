@@ -1,7 +1,7 @@
+import { TaskListProps } from "@/types/gantt-types";
 import React from "react";
-import { TaskListProps } from "../types/gantt-types";
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask }) => {
+export const TaskList = ({ tasks, onDeleteTask }: TaskListProps) => {
   return (
     <div className="mt-6">
       <h3 className="text-lg font-semibold mb-3">생성된 태스크</h3>

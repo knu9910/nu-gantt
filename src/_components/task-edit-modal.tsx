@@ -13,14 +13,14 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TaskEditModalProps } from "../types/gantt-types";
+import { TaskEditModalProps } from "@/types/gantt-types";
 
-export const TaskEditModal: React.FC<TaskEditModalProps> = ({
+export const TaskEditModal = ({
   show,
   task,
   onSave,
   onCancel,
-}) => {
+}: TaskEditModalProps) => {
   const [taskName, setTaskName] = useState("");
   const [taskColor, setTaskColor] = useState("#3b82f6");
   const [startDate, setStartDate] = useState("");
