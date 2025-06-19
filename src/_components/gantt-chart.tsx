@@ -17,7 +17,7 @@ import {
 } from "../_utils/event-handlers";
 import {
   createDeleteTaskHandler,
-  createUpdateTaskNameHandler,
+  createUpdateTaskHandler,
 } from "../_utils/task-utils";
 import {
   clearColumnSelection,
@@ -149,9 +149,12 @@ export const GanttChart: React.FC = () => {
     setEditModal({ show: true, task });
   };
 
-  // 태스크 편집 모달 저장 핸들러
-  const handleSaveTaskName = (taskId: string, newName: string) => {
-    updateTaskName(taskId, newName);
+  // 태스크 편집 모달에서 저장 핸들러
+  const handleSaveTaskName = (
+    taskId: string,
+    updates: { name: string; color: string; startDate: string; endDate: string }
+  ) => {
+    updateTask(taskId, updates);
     setEditModal({ show: false, task: null });
   };
 
@@ -252,8 +255,8 @@ export const GanttChart: React.FC = () => {
   // 태스크 삭제
   const deleteTask = createDeleteTaskHandler(tasks, setTasks);
 
-  // 태스크 이름 업데이트
-  const updateTaskName = createUpdateTaskNameHandler(tasks, setTasks);
+  // 태스크 전체 정보 업데이트
+  const updateTask = createUpdateTaskHandler(tasks, setTasks);
 
   return (
     <div className="p-4">

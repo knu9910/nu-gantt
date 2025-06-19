@@ -161,7 +161,10 @@ export type ContextMenuProps = {
 export type TaskEditModalProps = {
   show: boolean;
   task: Task | null;
-  onSave: (taskId: string, newName: string) => void;
+  onSave: (
+    taskId: string,
+    updates: { name: string; color: string; startDate: string; endDate: string }
+  ) => void;
   onCancel: () => void;
 };
 

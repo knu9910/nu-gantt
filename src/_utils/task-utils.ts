@@ -232,3 +232,18 @@ export const createUpdateTaskNameHandler = (
     setTasks(updateTask(tasks, taskId, { name: newName }));
   };
 };
+
+/**
+ * 태스크 전체 정보 업데이트 핸들러 생성
+ */
+export const createUpdateTaskHandler = (
+  tasks: Task[],
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>
+) => {
+  return (
+    taskId: string,
+    updates: { name: string; color: string; startDate: string; endDate: string }
+  ) => {
+    setTasks(updateTask(tasks, taskId, updates));
+  };
+};
