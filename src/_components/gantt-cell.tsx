@@ -63,6 +63,12 @@ export const GanttCell: React.FC<GanttCellProps> = ({
     ? isHoliday(currentDate, holidays)
     : false;
 
+  // 주말 확인 (토요일: 6, 일요일: 0)
+  const isWeekend = currentDate
+    ? new Date(currentDate).getDay() === 0 ||
+      new Date(currentDate).getDay() === 6
+    : false;
+
   // 태스크의 시작과 끝 인덱스 계산
   const taskStartIndex = task ? dates.indexOf(task.startDate) : -1;
   const taskEndIndex = task ? dates.indexOf(task.endDate) : -1;
@@ -115,7 +121,9 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             : taskPreview
             ? taskPreview.color
             : isCurrentDateHoliday
-            ? "#FEE2E2"
+            ? "#FEE2E2" // 공휴일 - 빨간색 계열
+            : isWeekend
+            ? "#EFF6FF" // 주말 - 파란색 계열
             : isColumnSelectedCell
             ? "#DBEAFE"
             : isInDragSelection
