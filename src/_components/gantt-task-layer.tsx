@@ -61,8 +61,10 @@ const TaskItem = React.memo<{
 
     return (
       <div
-        className={`absolute pointer-events-auto cursor-pointer group task-item ${
-          isBeingDragged ? "dragging" : ""
+        className={`absolute pointer-events-auto cursor-pointer group transition-all duration-200 ease-in-out ${
+          isBeingDragged
+            ? "opacity-0 scale-95 pointer-events-none"
+            : "opacity-100 scale-100"
         }`}
         style={{
           left: x,
@@ -218,19 +220,23 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = React.memo(
 
       let previewStartCol: number;
       let previewEndCol: number;
+      let previewRow: number;
 
       if (dragState.dragType === "move") {
         // 이동: clickOffset을 고려한 위치 계산
         previewStartCol = dragState.currentPos.col - clickOffset;
         previewEndCol = previewStartCol + taskDuration;
+        previewRow = dragState.currentPos.row; // 이동 시에는 행 변경 가능
       } else if (dragState.dragType === "resize-start") {
-        // 시작점 리사이즈
+        // 시작점 리사이즈: 행 이동 방지
         previewStartCol = Math.min(dragState.currentPos.col, originalEndCol);
         previewEndCol = originalEndCol;
+        previewRow = originalTask.row; // 리사이즈 시에는 원래 행 유지
       } else if (dragState.dragType === "resize-end") {
-        // 끝점 리사이즈
+        // 끝점 리사이즈: 행 이동 방지
         previewStartCol = originalStartCol;
         previewEndCol = Math.max(dragState.currentPos.col, originalStartCol);
+        previewRow = originalTask.row; // 리사이즈 시에는 원래 행 유지
       } else {
         return null;
       }
@@ -244,9 +250,19 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = React.memo(
         return null;
       }
 
+      console.log("Drag preview:", {
+        taskId: originalTask.id,
+        dragType: dragState.dragType,
+        originalRow: originalTask.row,
+        previewRow,
+        previewStartCol,
+        previewEndCol,
+        clickOffset,
+      });
+
       return {
         ...originalTask,
-        row: dragState.currentPos.row,
+        row: previewRow,
         startCol: previewStartCol,
         endCol: previewEndCol,
         startDate: dates[previewStartCol],
@@ -368,7 +384,7 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = React.memo(
             }}
           >
             <div
-              className="absolute pointer-events-none drag-preview"
+              className="absolute pointer-events-none animate-pulse"
               style={{
                 left: dragPreviewTask.startCol * CELL_WIDTH,
                 top: dragPreviewTask.row * CELL_HEIGHT,
@@ -380,6 +396,7 @@ export const GanttTaskLayer: React.FC<GanttTaskLayerProps> = React.memo(
                 border: "2px dashed rgba(0,0,0,0.6)",
                 borderRadius: "4px",
                 boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                transform: "scale(1.02)",
               }}
             >
               {/* 미리보기 텍스트 */}
