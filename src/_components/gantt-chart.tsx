@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useEffect, useRef, useState } from "react";
 import {
   ColumnSelection,
   ContextMenuState,
@@ -25,15 +26,16 @@ import {
   createDeleteTaskHandler,
   createUpdateTaskHandler,
 } from "@/_utils/task-utils";
-import React, { useState, useRef, useEffect, useCallback } from "react";
 import { GanttHeader } from "./gantt-header";
-import { GanttCell } from "./gantt-cell";
+import { GanttGridCanvas } from "./gantt-grid-canvas";
+import { GanttTaskLayer } from "./gantt-task-layer";
 import { ContextMenu } from "./context-menu";
 import { TaskEditModal } from "./task-edit-modal";
 import { TaskList } from "./task-list";
 import { TodayButton } from "./today-button";
 import { useHolidays } from "@/hooks/use-holidays";
 import { taskColors } from "@/_constants/task-colors";
+import { CELL_WIDTH, CELL_HEIGHT } from "@/_constants/gantt-constants";
 
 export const GanttChart = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -83,12 +85,10 @@ export const GanttChart = () => {
   const ganttRef = useRef<HTMLDivElement>(null);
 
   // 공휴일 데이터 가져오기
-  const { data: holidays = [] } = useHolidays(dates);
+  const { data: holidayData = [] } = useHolidays(dates);
 
-  // 디바운싱을 위한 ref
-  const dragUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastUpdateTimeRef = useRef<number>(0);
-  const DRAG_UPDATE_THROTTLE = 16; // ~60fps
+  // Holiday[] 배열에서 날짜 문자열만 추출
+  const holidays = holidayData.map((holiday) => holiday.date);
 
   // 행 개수 조절 함수
   const updateRowCount = (newRowCount: number) => {
@@ -100,52 +100,11 @@ export const GanttChart = () => {
     );
   };
 
-  // 디바운싱된 드래그 상태 업데이트
-  const throttledSetDragState = useCallback(
-    (newState: React.SetStateAction<DragState>) => {
-      const now = Date.now();
-
-      // 함수형 업데이트인지 확인
-      if (typeof newState === "function") {
-        setDragState(newState);
-        lastUpdateTimeRef.current = now;
-        return;
-      }
-
-      // 즉시 업데이트가 필요한 경우 (드래그 시작/종료)
-      if (newState.isDragging !== undefined) {
-        setDragState(newState);
-        lastUpdateTimeRef.current = now;
-        return;
-      }
-
-      // 스로틀링 적용
-      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
-
-      if (timeSinceLastUpdate >= DRAG_UPDATE_THROTTLE) {
-        // 즉시 업데이트
-        setDragState(newState);
-        lastUpdateTimeRef.current = now;
-      } else {
-        // 디바운싱 적용
-        if (dragUpdateTimeoutRef.current) {
-          clearTimeout(dragUpdateTimeoutRef.current);
-        }
-
-        dragUpdateTimeoutRef.current = setTimeout(() => {
-          setDragState(newState);
-          lastUpdateTimeRef.current = Date.now();
-        }, DRAG_UPDATE_THROTTLE - timeSinceLastUpdate);
-      }
-    },
-    []
-  );
-
-  // 이벤트 핸들러들 생성 (디바운싱된 setState 사용)
+  // 이벤트 핸들러들 생성
   const handleMouseDown = createMouseDownHandler(
     dates,
     contextMenu,
-    throttledSetDragState,
+    setDragState,
     setContextMenu,
     tasks,
     setDragSelection
@@ -157,10 +116,7 @@ export const GanttChart = () => {
     setContextMenu
   );
 
-  const handleMouseEnter = createMouseEnterHandler(
-    dragState,
-    throttledSetDragState
-  );
+  const handleMouseEnter = createMouseEnterHandler(dragState, setDragState);
 
   const handleGanttMouseMove = createGanttMouseMoveHandler(
     dragState,
@@ -174,7 +130,7 @@ export const GanttChart = () => {
     dragState,
     tasks,
     dates,
-    throttledSetDragState,
+    setDragState,
     setDragSelection,
     setTasks,
     (task, e) => {
@@ -204,13 +160,13 @@ export const GanttChart = () => {
     setEditModal({ show: false, task: null });
   };
 
-  // 리사이즈 핸들러들도 디바운싱 적용
+  // 리사이즈 핸들러들
   const handleResizeStart = (
     rowIndex: number,
     colIndex: number,
     taskId: string
   ) => {
-    throttledSetDragState({
+    setDragState({
       isDragging: true,
       dragType: "resize-start",
       taskId,
@@ -225,7 +181,7 @@ export const GanttChart = () => {
     colIndex: number,
     taskId: string
   ) => {
-    throttledSetDragState({
+    setDragState({
       isDragging: true,
       dragType: "resize-end",
       taskId,
@@ -233,6 +189,25 @@ export const GanttChart = () => {
       currentPos: { row: rowIndex, col: colIndex },
       clickOffset: 0,
     });
+  };
+
+  // 캔버스 셀 클릭 핸들러 (빈 영역)
+  const handleCanvasCellClick = (
+    row: number,
+    col: number,
+    e: React.MouseEvent
+  ) => {
+    handleMouseDown(row, col, e);
+  };
+
+  // 캔버스 셀 우클릭 핸들러
+  const handleCanvasCellRightClick = (
+    row: number,
+    col: number,
+    e: React.MouseEvent
+  ) => {
+    console.log("Canvas right click:", { row, col });
+    handleRightClick(row, col, e);
   };
 
   // 태스크가 변경될 때마다 날짜 범위 업데이트 (드래그 중이 아닐 때만)
@@ -289,15 +264,6 @@ export const GanttChart = () => {
   // 태스크 전체 정보 업데이트
   const updateTask = createUpdateTaskHandler(tasks, setTasks);
 
-  // 컴포넌트 언마운트 시 타이머 정리
-  useEffect(() => {
-    return () => {
-      if (dragUpdateTimeoutRef.current) {
-        clearTimeout(dragUpdateTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div className="p-4">
       {/* 행 개수 조절 컨트롤 */}
@@ -323,6 +289,11 @@ export const GanttChart = () => {
           setMonthSelection={setMonthSelection}
           setColumnSelection={setColumnSelection}
         />
+
+        {/* 성능 정보 표시 */}
+        <div className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
+          🚀 Canvas 최적화 활성화
+        </div>
       </div>
 
       <div
@@ -333,42 +304,53 @@ export const GanttChart = () => {
         onMouseUp={(e) => handleMouseUp(e.nativeEvent)}
       >
         {/* 헤더 - 날짜 */}
-        <GanttHeader
-          dates={dates}
-          holidays={holidays}
-          columnSelection={columnSelection}
-          monthSelection={monthSelection}
-          onColumnClick={handleColumnClickWithMonthClear}
-          onMonthClick={handleMonthClick}
-        />
+        <div className="sticky top-0 z-30 bg-white border-b border-gray-200">
+          <GanttHeader
+            dates={dates}
+            holidays={holidayData}
+            columnSelection={columnSelection}
+            monthSelection={monthSelection}
+            onColumnClick={handleColumnClickWithMonthClear}
+            onMonthClick={handleMonthClick}
+          />
+        </div>
 
-        {/* 태스크 행들 */}
-        <div>
-          {rows.map((rowName, rowIndex) => (
-            <div key={rowIndex} className="flex border-gray-200">
-              {/* 날짜 셀들 */}
-              {dates.map((date, colIndex) => (
-                <GanttCell
-                  key={`${rowIndex}-${colIndex}`}
-                  rowIndex={rowIndex}
-                  colIndex={colIndex}
-                  dates={dates}
-                  tasks={tasks}
-                  holidays={holidays}
-                  dragState={dragState}
-                  dragSelection={dragSelection}
-                  columnSelection={columnSelection}
-                  monthSelection={monthSelection}
-                  onMouseDown={handleMouseDown}
-                  onMouseEnter={handleMouseEnter}
-                  onContextMenu={handleRightClick}
-                  onTaskClick={handleTaskClick}
-                  onResizeStart={handleResizeStart}
-                  onResizeEnd={handleResizeEnd}
-                />
-              ))}
-            </div>
-          ))}
+        {/* 간트 차트 콘텐츠 영역 */}
+        <div className="relative">
+          {/* 콘텐츠 크기를 정의하는 컨테이너 */}
+          <div
+            className="relative"
+            style={{
+              width: `${dates.length * CELL_WIDTH}px`,
+              height: `${rows.length * CELL_HEIGHT}px`,
+            }}
+          >
+            {/* 캔버스 격자 그리드 */}
+            <GanttGridCanvas
+              dates={dates}
+              rows={rows}
+              holidays={holidays}
+              columnSelection={columnSelection}
+              monthSelection={monthSelection}
+              onCellClick={handleCanvasCellClick}
+              onCellRightClick={handleCanvasCellRightClick}
+            />
+
+            {/* HTML 태스크 레이어 */}
+            <GanttTaskLayer
+              dates={dates}
+              rows={rows}
+              tasks={tasks}
+              dragState={dragState}
+              dragSelection={dragSelection}
+              onMouseDown={handleMouseDown}
+              onMouseEnter={handleMouseEnter}
+              onTaskClick={handleTaskClick}
+              onResizeStart={handleResizeStart}
+              onResizeEnd={handleResizeEnd}
+              onContextMenu={handleRightClick}
+            />
+          </div>
         </div>
       </div>
 
