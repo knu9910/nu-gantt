@@ -25,7 +25,7 @@ import {
   createDeleteTaskHandler,
   createUpdateTaskHandler,
 } from "@/_utils/task-utils";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { GanttHeader } from "./gantt-header";
 import { GanttCell } from "./gantt-cell";
 import { ContextMenu } from "./context-menu";
@@ -85,6 +85,11 @@ export const GanttChart = () => {
   // 공휴일 데이터 가져오기
   const { data: holidays = [] } = useHolidays(dates);
 
+  // 디바운싱을 위한 ref
+  const dragUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUpdateTimeRef = useRef<number>(0);
+  const DRAG_UPDATE_THROTTLE = 16; // ~60fps
+
   // 행 개수 조절 함수
   const updateRowCount = (newRowCount: number) => {
     const validCount = Math.max(1, Math.min(50, newRowCount));
@@ -95,11 +100,52 @@ export const GanttChart = () => {
     );
   };
 
-  // 이벤트 핸들러들 생성
+  // 디바운싱된 드래그 상태 업데이트
+  const throttledSetDragState = useCallback(
+    (newState: React.SetStateAction<DragState>) => {
+      const now = Date.now();
+
+      // 함수형 업데이트인지 확인
+      if (typeof newState === "function") {
+        setDragState(newState);
+        lastUpdateTimeRef.current = now;
+        return;
+      }
+
+      // 즉시 업데이트가 필요한 경우 (드래그 시작/종료)
+      if (newState.isDragging !== undefined) {
+        setDragState(newState);
+        lastUpdateTimeRef.current = now;
+        return;
+      }
+
+      // 스로틀링 적용
+      const timeSinceLastUpdate = now - lastUpdateTimeRef.current;
+
+      if (timeSinceLastUpdate >= DRAG_UPDATE_THROTTLE) {
+        // 즉시 업데이트
+        setDragState(newState);
+        lastUpdateTimeRef.current = now;
+      } else {
+        // 디바운싱 적용
+        if (dragUpdateTimeoutRef.current) {
+          clearTimeout(dragUpdateTimeoutRef.current);
+        }
+
+        dragUpdateTimeoutRef.current = setTimeout(() => {
+          setDragState(newState);
+          lastUpdateTimeRef.current = Date.now();
+        }, DRAG_UPDATE_THROTTLE - timeSinceLastUpdate);
+      }
+    },
+    []
+  );
+
+  // 이벤트 핸들러들 생성 (디바운싱된 setState 사용)
   const handleMouseDown = createMouseDownHandler(
     dates,
     contextMenu,
-    setDragState,
+    throttledSetDragState,
     setContextMenu,
     tasks,
     setDragSelection
@@ -111,7 +157,10 @@ export const GanttChart = () => {
     setContextMenu
   );
 
-  const handleMouseEnter = createMouseEnterHandler(dragState, setDragState);
+  const handleMouseEnter = createMouseEnterHandler(
+    dragState,
+    throttledSetDragState
+  );
 
   const handleGanttMouseMove = createGanttMouseMoveHandler(
     dragState,
@@ -125,11 +174,10 @@ export const GanttChart = () => {
     dragState,
     tasks,
     dates,
-    setDragState,
+    throttledSetDragState,
     setDragSelection,
     setTasks,
     (task, e) => {
-      // MouseEvent를 React.MouseEvent로 변환
       const reactEvent = e as unknown as React.MouseEvent;
       handleTaskClick(task, reactEvent);
     },
@@ -156,13 +204,13 @@ export const GanttChart = () => {
     setEditModal({ show: false, task: null });
   };
 
-  // 리사이즈 시작 핸들러
+  // 리사이즈 핸들러들도 디바운싱 적용
   const handleResizeStart = (
     rowIndex: number,
     colIndex: number,
     taskId: string
   ) => {
-    setDragState({
+    throttledSetDragState({
       isDragging: true,
       dragType: "resize-start",
       taskId,
@@ -172,13 +220,12 @@ export const GanttChart = () => {
     });
   };
 
-  // 리사이즈 끝 핸들러
   const handleResizeEnd = (
     rowIndex: number,
     colIndex: number,
     taskId: string
   ) => {
-    setDragState({
+    throttledSetDragState({
       isDragging: true,
       dragType: "resize-end",
       taskId,
@@ -241,6 +288,15 @@ export const GanttChart = () => {
 
   // 태스크 전체 정보 업데이트
   const updateTask = createUpdateTaskHandler(tasks, setTasks);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (dragUpdateTimeoutRef.current) {
+        clearTimeout(dragUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="p-4">
@@ -323,7 +379,7 @@ export const GanttChart = () => {
         y={contextMenu.y}
         task={contextMenu.task}
         onCreateTask={createTaskFromContext}
-        onDeleteTask={(taskId) => {
+        onDeleteTask={(taskId: string) => {
           deleteTask(taskId);
           setContextMenu({ ...contextMenu, show: false });
         }}
