@@ -18,6 +18,7 @@ import {
   TASK_NAME_PADDING,
   TASK_BORDER_OFFSET,
 } from "../_constants/gantt-constants";
+import { GANTT_COLORS } from "../_constants/gantt-colors";
 
 export const GanttCell: React.FC<GanttCellProps> = ({
   rowIndex,
@@ -96,17 +97,8 @@ export const GanttCell: React.FC<GanttCellProps> = ({
       key={`${rowIndex}-${colIndex}`}
       className={`
         ${
-          task && !isDraggingThisTask ? "" : "border-r border-b border-gray-200"
+          task && !isDraggingThisTask ? "" : "border-r border-b"
         } relative cursor-pointer
-        ${
-          isInDragArea
-            ? "bg-blue-200"
-            : isInDragSelection
-            ? "bg-yellow-200 border-2 border-yellow-400"
-            : isColumnSelectedCell || isMonthSelected
-            ? "bg-blue-100"
-            : "hover:bg-gray-100"
-        }
         ${task && !isDraggingThisTask ? "bg-opacity-80 cursor-move" : ""}
         ${taskPreview ? "bg-opacity-50" : ""}
       `}
@@ -120,15 +112,24 @@ export const GanttCell: React.FC<GanttCellProps> = ({
             ? task.color
             : taskPreview
             ? taskPreview.color
-            : isCurrentDateHoliday
-            ? "#FEE2E2" // 공휴일 - 빨간색 계열
-            : isWeekend
-            ? "#EFF6FF" // 주말 - 파란색 계열
-            : isColumnSelectedCell
-            ? "#DBEAFE"
+            : isInDragArea
+            ? GANTT_COLORS.SELECTED.DRAG_BACKGROUND
             : isInDragSelection
-            ? "#FEF3C7"
-            : undefined,
+            ? GANTT_COLORS.SELECTED.DRAG_BACKGROUND
+            : isColumnSelectedCell || isMonthSelected
+            ? GANTT_COLORS.SELECTED.COLUMN_BACKGROUND
+            : isCurrentDateHoliday
+            ? GANTT_COLORS.HOLIDAY.BACKGROUND
+            : isWeekend
+            ? GANTT_COLORS.WEEKEND.BACKGROUND
+            : GANTT_COLORS.CELL.BACKGROUND,
+        borderColor: isInDragArea
+          ? GANTT_COLORS.SELECTED.DRAG_BORDER
+          : isInDragSelection
+          ? GANTT_COLORS.SELECTED.DRAG_BORDER
+          : isColumnSelectedCell || isMonthSelected
+          ? GANTT_COLORS.SELECTED.COLUMN_BORDER
+          : GANTT_COLORS.CELL.BORDER,
       }}
       onMouseDown={(e) => onMouseDown(rowIndex, colIndex, e)}
       onMouseEnter={() => {
@@ -182,7 +183,7 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                   left: "0",
                   top: "50%",
                   transform: "translateY(-50%)",
-                  color: "white",
+                  color: GANTT_COLORS.TASK.TEXT,
                   fontSize: "12px",
                   fontWeight: "bold",
                   pointerEvents: "none",
@@ -208,9 +209,19 @@ export const GanttCell: React.FC<GanttCellProps> = ({
           {/* 시작 셀의 왼쪽 끝에 리사이즈 핸들 */}
           {isTaskStart && taskStartIndex !== taskEndIndex && (
             <div
-              className="absolute left-0 top-0 h-full cursor-w-resize z-30 hover:bg-white hover:bg-opacity-20"
-              style={{ width: `${RESIZE_HANDLE_WIDTH}px` }}
+              className="absolute left-0 top-0 h-full cursor-w-resize z-30"
+              style={{
+                width: `${RESIZE_HANDLE_WIDTH}px`,
+                backgroundColor: "transparent",
+              }}
               onMouseDown={(e) => handleResizeMouseDown(e, "start")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  GANTT_COLORS.TASK.RESIZE_HANDLE_HOVER;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
               title="크기 조절"
             />
           )}
@@ -218,9 +229,19 @@ export const GanttCell: React.FC<GanttCellProps> = ({
           {/* 끝 셀의 오른쪽 끝에 리사이즈 핸들 */}
           {isTaskEnd && taskStartIndex !== taskEndIndex && (
             <div
-              className="absolute right-0 top-0 h-full cursor-e-resize z-30 hover:bg-white hover:bg-opacity-20"
-              style={{ width: `${RESIZE_HANDLE_WIDTH}px` }}
+              className="absolute right-0 top-0 h-full cursor-e-resize z-30"
+              style={{
+                width: `${RESIZE_HANDLE_WIDTH}px`,
+                backgroundColor: "transparent",
+              }}
               onMouseDown={(e) => handleResizeMouseDown(e, "end")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  GANTT_COLORS.TASK.RESIZE_HANDLE_HOVER;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
               title="크기 조절"
             />
           )}
@@ -228,7 +249,10 @@ export const GanttCell: React.FC<GanttCellProps> = ({
       )}
 
       {taskPreview && (
-        <div className="absolute inset-0 flex items-center justify-center border-2 border-dashed border-gray-400">
+        <div
+          className="absolute inset-0 flex items-center justify-center border-2 border-dashed"
+          style={{ borderColor: GANTT_COLORS.TASK.PREVIEW_BORDER }}
+        >
           {/* 미리보기 태스크 이름을 전체 영역에 걸쳐서 표시 */}
           {(() => {
             const originalTask = tasks.find((t) => t.id === dragState.taskId);
@@ -274,7 +298,10 @@ export const GanttCell: React.FC<GanttCellProps> = ({
                     }px`,
                   }}
                 >
-                  <span className="text-white text-xs font-medium truncate px-2 w-full text-center">
+                  <span
+                    className="text-xs font-medium truncate px-2 w-full text-center"
+                    style={{ color: GANTT_COLORS.TASK.TEXT }}
+                  >
                     {taskPreview.name}
                   </span>
                 </div>

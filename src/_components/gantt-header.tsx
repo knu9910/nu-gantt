@@ -7,6 +7,7 @@ import {
   DAY_HEADER_HEIGHT,
   MONTH_HEADER_HEIGHT,
 } from "../_constants/gantt-constants";
+import { GANTT_COLORS } from "../_constants/gantt-colors";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -124,10 +125,10 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
                   color:
                     isCurrentDateHoliday &&
                     !(isMonthSelected || isColumnSelectedSingle)
-                      ? "#DC2626" // 공휴일이고 선택되지 않은 경우 빨간색
+                      ? GANTT_COLORS.HOLIDAY.TEXT
                       : isWeekend &&
                         !(isMonthSelected || isColumnSelectedSingle)
-                      ? "#3B82F6" // 주말이고 선택되지 않은 경우 파란색
+                      ? GANTT_COLORS.WEEKEND.TEXT
                       : undefined,
                 }}
               >
@@ -140,11 +141,11 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
                   color:
                     isCurrentDateHoliday &&
                     !(isMonthSelected || isColumnSelectedSingle)
-                      ? "#DC2626" // 공휴일이고 선택되지 않은 경우 빨간색
+                      ? GANTT_COLORS.HOLIDAY.TEXT
                       : isWeekend &&
                         !(isMonthSelected || isColumnSelectedSingle)
-                      ? "#3B82F6" // 주말이고 선택되지 않은 경우 파란색
-                      : "#9CA3AF", // 기본 회색
+                      ? GANTT_COLORS.WEEKEND.TEXT
+                      : "#9CA3AF", // 기본 회색은 그대로 유지
                 }}
               >
                 {format(dateObj, "EEEEE", { locale: ko })}
