@@ -1,7 +1,7 @@
-import { ColumnSelection, MonthSelection } from '@/types/gantt/gantt-types';
-import { scrollToToday } from '@/utils/gantt/scroll-utils';
-import { clearMonthSelection } from '@/utils/gantt/selection-utils';
-import React from 'react';
+import { scrollToToday } from "@/_utils/scroll-utils";
+import { clearMonthSelection } from "@/_utils/selection-utils";
+import { ColumnSelection, MonthSelection } from "@/types/gantt-types";
+import React from "react";
 
 interface TodayButtonProps {
   ganttRef: React.RefObject<HTMLDivElement | null>;
@@ -10,7 +10,12 @@ interface TodayButtonProps {
   setColumnSelection: (selection: ColumnSelection) => void;
 }
 
-export const TodayButton = ({ ganttRef, dates, setMonthSelection, setColumnSelection }: TodayButtonProps) => {
+export const TodayButton = ({
+  ganttRef,
+  dates,
+  setMonthSelection,
+  setColumnSelection,
+}: TodayButtonProps) => {
   const handleTodayClick = () => {
     // 월 선택 해제하고 오늘 날짜 열 선택
     setMonthSelection(clearMonthSelection());
