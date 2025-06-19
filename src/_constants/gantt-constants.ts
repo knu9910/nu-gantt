@@ -8,7 +8,7 @@ export const CELL_HEIGHT = 28; // 태스크 셀 높이 (px)
 
 // 헤더 관련
 export const MONTH_HEADER_HEIGHT = 32; // 월 헤더 높이 (px)
-export const DAY_HEADER_HEIGHT = 24; // 일 헤더 높이 (px)
+export const DAY_HEADER_HEIGHT = 33; // 일 헤더 높이 (px)
 export const HEADER_HEIGHT = MONTH_HEADER_HEIGHT + DAY_HEADER_HEIGHT; // 전체 헤더 높이 (px)
 
 // 드래그 관련

@@ -8,6 +8,7 @@ import {
   MONTH_HEADER_HEIGHT,
 } from "../_constants/gantt-constants";
 import { format } from "date-fns";
+import { ko } from "date-fns/locale";
 
 // 월별 그룹화 함수
 const groupDatesByMonth = (dates: string[]) => {
@@ -74,7 +75,7 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
         ))}
       </div>
 
-      {/* 일 헤더 (숫자만) */}
+      {/* 일 헤더 (숫자와 요일) */}
       <div className="flex">
         {dates.map((date, colIndex) => {
           const dateObj = new Date(date);
@@ -93,11 +94,15 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
           // 공휴일 확인
           const isCurrentDateHoliday = isHoliday(date, holidays);
 
+          // 주말 확인 (토요일: 6, 일요일: 0)
+          const dayOfWeekNum = dateObj.getDay();
+          const isWeekend = dayOfWeekNum === 0 || dayOfWeekNum === 6;
+
           return (
             <div
               key={date}
               className={`
-                border-r border-b border-gray-300 text-xs font-medium cursor-pointer flex items-center justify-center
+                border-r border-b border-gray-300 text-xs font-medium cursor-pointer flex flex-col items-center justify-center
                 ${
                   isMonthSelected || isColumnSelectedSingle
                     ? "bg-blue-500 text-white"
@@ -110,15 +115,40 @@ export const GanttHeader: React.FC<GanttHeaderProps> = ({
                 minWidth: `${CELL_WIDTH}px`,
                 maxWidth: `${CELL_WIDTH}px`,
                 textAlign: "center",
-                color:
-                  isCurrentDateHoliday &&
-                  !(isMonthSelected || isColumnSelectedSingle)
-                    ? "#DC2626" // 공휴일이고 선택되지 않은 경우 빨간색
-                    : undefined,
               }}
               onClick={(e) => onColumnClick(colIndex, e)}
             >
-              {day}
+              {/* 날짜 */}
+              <div
+                style={{
+                  color:
+                    isCurrentDateHoliday &&
+                    !(isMonthSelected || isColumnSelectedSingle)
+                      ? "#DC2626" // 공휴일이고 선택되지 않은 경우 빨간색
+                      : isWeekend &&
+                        !(isMonthSelected || isColumnSelectedSingle)
+                      ? "#3B82F6" // 주말이고 선택되지 않은 경우 파란색
+                      : undefined,
+                }}
+              >
+                {day}
+              </div>
+              {/* 요일 */}
+              <div
+                className="text-[10px] leading-none"
+                style={{
+                  color:
+                    isCurrentDateHoliday &&
+                    !(isMonthSelected || isColumnSelectedSingle)
+                      ? "#DC2626" // 공휴일이고 선택되지 않은 경우 빨간색
+                      : isWeekend &&
+                        !(isMonthSelected || isColumnSelectedSingle)
+                      ? "#3B82F6" // 주말이고 선택되지 않은 경우 파란색
+                      : "#9CA3AF", // 기본 회색
+                }}
+              >
+                {format(dateObj, "EEEEE", { locale: ko })}
+              </div>
             </div>
           );
         })}
