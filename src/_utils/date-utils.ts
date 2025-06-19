@@ -91,10 +91,11 @@ const adjustDateRangeForMonthlyMinimum = (
  * 태스크들의 날짜 범위를 기반으로 간트 차트에 표시할 날짜 배열 생성
  */
 export const generateDates = (tasks: Task[]): string[] => {
+  const today = new Date();
+
   if (tasks.length === 0) {
     // 태스크가 없는 경우 현재 날짜부터 5개월(150일) 생성
     const dates: string[] = [];
-    const today = new Date();
 
     for (let i = 0; i < DEFAULT_DATE_RANGE_DAYS; i++) {
       const date = new Date(today);
@@ -105,14 +106,18 @@ export const generateDates = (tasks: Task[]): string[] => {
     return dates;
   }
 
-  // 태스크가 있는 경우 태스크 범위 계산
+  // 태스크가 있는 경우 태스크 범위와 오늘 날짜를 모두 고려
   const allDates = tasks.flatMap((task) => [task.startDate, task.endDate]);
-  const minDate = new Date(
+  const taskMinDate = new Date(
     Math.min(...allDates.map((d) => new Date(d).getTime()))
   );
-  const maxDate = new Date(
+  const taskMaxDate = new Date(
     Math.max(...allDates.map((d) => new Date(d).getTime()))
   );
+
+  // 오늘 날짜와 태스크 범위를 비교하여 전체 범위 결정
+  const minDate = new Date(Math.min(today.getTime(), taskMinDate.getTime()));
+  const maxDate = new Date(Math.max(today.getTime(), taskMaxDate.getTime()));
 
   // 시작일을 상수만큼 앞당기고, 종료일을 상수만큼 뒤로 연장
   minDate.setDate(minDate.getDate() - DATE_RANGE_BUFFER_DAYS);
@@ -124,14 +129,17 @@ export const generateDates = (tasks: Task[]): string[] => {
     maxDate
   );
 
-  // 최소 5개월(150일) 보장
-  const today = new Date();
+  // 최소 5개월(150일) 보장 - 오늘 날짜 기준으로
   const minEndDate = new Date(today);
   minEndDate.setDate(today.getDate() + DEFAULT_DATE_RANGE_DAYS - 1);
 
-  // 태스크 범위가 5개월보다 작으면 오늘부터 5개월로 확장
-  const actualStartDate = adjustedStart < today ? adjustedStart : today;
-  const actualEndDate = adjustedEnd > minEndDate ? adjustedEnd : minEndDate;
+  // 최종 범위 결정: 오늘 날짜가 항상 포함되도록 보장
+  const actualStartDate = new Date(
+    Math.min(adjustedStart.getTime(), today.getTime())
+  );
+  const actualEndDate = new Date(
+    Math.max(adjustedEnd.getTime(), minEndDate.getTime())
+  );
 
   const dates: string[] = [];
   const currentDate = new Date(actualStartDate);
